@@ -14,6 +14,7 @@ add_executable(main
     src/xy_hardware.c
     src/xy_renderer.c
     src/xy_shapes.c
+    src/xy_math.c
 )
 
 pico_add_extra_outputs(main)

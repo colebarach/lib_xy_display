@@ -4,6 +4,7 @@
 // Includes -------------------------------------------------------------------------------------------------------------------
 
 #include "xy_shapes.h"
+#include "xy_math.h"
 
 // Libraries ------------------------------------------------------------------------------------------------------------------
 
@@ -37,7 +38,7 @@ void rendererEntrypoint();
 
 // Function Definitions -------------------------------------------------------------------------------------------------------
 
-volatile struct xyShape* xyRendererRenderShape(const uint16_t* points, const uint16_t pointCount, uint8_t xPosition, uint8_t yPosition)
+volatile struct xyShape* xyRendererRenderShape(uint16_t* points, uint16_t pointCount, uint8_t xPosition, uint8_t yPosition)
 {
     // Check for full stack
     if(stackTop >= RENDER_STACK_SIZE) return NULL;
@@ -151,5 +152,48 @@ void rendererEntrypoint()
     {
         rendererInterrupt();
         sleep_us(RENDER_PERIOD_US);
+    }
+}
+
+uint16_t* xyShapeAllocate(uint16_t size)
+{
+    // Allocate memory for points
+    uint16_t* destination = malloc(sizeof(uint16_t) * size);
+
+    // Return shape
+    return destination;
+}
+
+void xyShapeDeallocate(uint16_t* target)
+{
+    free(target);
+}
+
+uint16_t* xyShapeCopy(uint16_t* source, uint16_t sourceSize)
+{
+    // Allocate memory
+    uint16_t* destination = malloc(sizeof(uint16_t) * sourceSize);
+
+    // Copy point values from source
+    for(uint16_t index = 0; index < sourceSize; ++index)
+    {
+        destination[index] = source[index];
+    }
+
+    // Return shape
+    return destination;
+}
+
+void xyShapeRotate(uint16_t* source, uint16_t* destination, uint16_t sourceSize, uint8_t xPivot, uint8_t yPivot, uint8_t theta)
+{
+    for(uint16_t index = 0; index < sourceSize; ++index)
+    {
+        int16_t x = (int16_t)(source[index] & 0x00FF)       - xPivot;
+        int16_t y = (int16_t)(source[index] & 0xFF00) / 256 - yPivot;
+
+        int16_t xPrime = (x * cosLut256x256Signed[theta] - y * sinLut256x256Signed[theta]) / 127;
+        int16_t yPrime = (x * sinLut256x256Signed[theta] + y * cosLut256x256Signed[theta]) / 127;
+
+        destination[index] = (uint8_t)(xPrime + xPivot) + (uint8_t)(yPrime + yPivot) * 256;
     }
 }

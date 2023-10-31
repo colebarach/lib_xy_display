@@ -26,11 +26,12 @@
 #include "xy_drawing.h"
 #include "xy_renderer.h"
 #include "xy_shapes.h"
+#include "xy_math.h"
 
 // Rendering Demos ------------------------------------------------------------------------------------------------------------
 // Rendering Demo - ASCII Table
 // - Call once to put an ASCII table into the render stack
-void xyRenderDemoAscii()
+void xyRendererDemoAscii()
 {
 	for(uint16_t index = 0; index < 0x80; ++index)
 	{
@@ -45,93 +46,133 @@ void xyRendererDemoHelloWorld()
 	xyRendererRenderString("HELLO,\nWORLD!", 0x50, 0x82);
 }
 
+// Rendering Demo - Grid
+// - Call once to put a grid into the render stack
+// - Scale determines the size of the squares
+// - X and Y iterations determine how many boxes to draw in each direction
+volatile struct xyShape xyRendererDemoGrid(uint16_t scale, uint16_t xIterations, uint16_t yIterations)
+{
+	xIterations += 1; // only draws (xIterations - 1) squares, for aesthetics only
+
+	uint16_t shapeSize = xIterations * yIterations * 3;
+	uint16_t* shape = xyShapeAllocate(shapeSize);
+
+	for(uint16_t yIndex = 0; yIndex < yIterations; ++yIndex)
+	{
+		for(uint16_t xIndex = 0; xIndex < xIterations; ++xIndex)
+		{
+			uint16_t pointIndex = (xIndex + yIndex * xIterations) * 3;
+
+			shape[pointIndex]     = xIndex * scale +  yIndex      * scale * 256;
+			shape[pointIndex + 1] = xIndex * scale + (yIndex + 1) * scale * 256;
+			shape[pointIndex + 2] = xIndex * scale +  yIndex      * scale * 256;
+		}
+	}
+
+	// xyRendererRenderShape();
+}
+
+// Rendering Demo - Screen Grid
+// - Call once to put a grid spanning the screen size into the render stack
+void xyRendererDemoScreenGrid()
+{
+	xyRendererDemoGrid(15, 17, 17);
+}
+
 // Drawing Demos --------------------------------------------------------------------------------------------------------------
 
 // Drawing Demo - Alphabet
-// - Call continuously to draw an alphabet on the screen
+// - Call to draw an alphabet on the screen
 void xyDrawDemoAlphabet()
 {
-	XY_CURSOR = 0x0000; XY_DELAY();
+	while(true)
+	{
+		XY_CURSOR = 0x0000; XY_DELAY();
 
-	XY_DRAW_CHAR_16x16_Y();
-	XY_DRAW_CHAR_16x16_Z();
+		XY_DRAW_CHAR_16x16_Y();
+		XY_DRAW_CHAR_16x16_Z();
 
-	XY_CURSOR -= 0x0020; XY_DELAY();
-	XY_CURSOR += 0X1400; XY_DELAY();
+		XY_CURSOR -= 0x0020; XY_DELAY();
+		XY_CURSOR += 0X1400; XY_DELAY();
 
-	XY_DRAW_CHAR_16x16_S();
-	XY_DRAW_CHAR_16x16_T();
-	XY_DRAW_CHAR_16x16_U();
-	XY_DRAW_CHAR_16x16_V();
-	XY_DRAW_CHAR_16x16_W();
-	XY_DRAW_CHAR_16x16_X();
+		XY_DRAW_CHAR_16x16_S();
+		XY_DRAW_CHAR_16x16_T();
+		XY_DRAW_CHAR_16x16_U();
+		XY_DRAW_CHAR_16x16_V();
+		XY_DRAW_CHAR_16x16_W();
+		XY_DRAW_CHAR_16x16_X();
 
-	XY_CURSOR -= 0x0060; XY_DELAY();
-	XY_CURSOR += 0X1400; XY_DELAY();
+		XY_CURSOR -= 0x0060; XY_DELAY();
+		XY_CURSOR += 0X1400; XY_DELAY();
 
-	XY_DRAW_CHAR_16x16_M();
-	XY_DRAW_CHAR_16x16_N();
-	XY_DRAW_CHAR_16x16_O();
-	XY_DRAW_CHAR_16x16_P();
-	XY_DRAW_CHAR_16x16_Q();
-	XY_DRAW_CHAR_16x16_R();
+		XY_DRAW_CHAR_16x16_M();
+		XY_DRAW_CHAR_16x16_N();
+		XY_DRAW_CHAR_16x16_O();
+		XY_DRAW_CHAR_16x16_P();
+		XY_DRAW_CHAR_16x16_Q();
+		XY_DRAW_CHAR_16x16_R();
 
-	XY_CURSOR -= 0x0060; XY_DELAY();
-	XY_CURSOR += 0X1400; XY_DELAY();
+		XY_CURSOR -= 0x0060; XY_DELAY();
+		XY_CURSOR += 0X1400; XY_DELAY();
 
-	XY_DRAW_CHAR_16x16_G();
-	XY_DRAW_CHAR_16x16_H();
-	XY_DRAW_CHAR_16x16_I();
-	XY_DRAW_CHAR_16x16_J();
-	XY_DRAW_CHAR_16x16_K();
-	XY_DRAW_CHAR_16x16_L();
+		XY_DRAW_CHAR_16x16_G();
+		XY_DRAW_CHAR_16x16_H();
+		XY_DRAW_CHAR_16x16_I();
+		XY_DRAW_CHAR_16x16_J();
+		XY_DRAW_CHAR_16x16_K();
+		XY_DRAW_CHAR_16x16_L();
 
-	XY_CURSOR -= 0x0060; XY_DELAY();
-	XY_CURSOR += 0X1400; XY_DELAY();
+		XY_CURSOR -= 0x0060; XY_DELAY();
+		XY_CURSOR += 0X1400; XY_DELAY();
 
-	XY_DRAW_CHAR_16x16_A();
-	XY_DRAW_CHAR_16x16_B();
-	XY_DRAW_CHAR_16x16_C();
-	XY_DRAW_CHAR_16x16_D();
-	XY_DRAW_CHAR_16x16_E();
-	XY_DRAW_CHAR_16x16_F();
+		XY_DRAW_CHAR_16x16_A();
+		XY_DRAW_CHAR_16x16_B();
+		XY_DRAW_CHAR_16x16_C();
+		XY_DRAW_CHAR_16x16_D();
+		XY_DRAW_CHAR_16x16_E();
+		XY_DRAW_CHAR_16x16_F();
 
-	XY_CURSOR -= 0x0060; XY_DELAY();
-	XY_CURSOR -= 0x5000; XY_DELAY();
+		XY_CURSOR -= 0x0060; XY_DELAY();
+		XY_CURSOR -= 0x5000; XY_DELAY();
+	}
+
 }
 
 // Drawing Demo - Grid
-// - Call continuously to draw a grid on the screen
+// - Call to draw a grid on the screen
 void xyDrawDemoGrid()
 {
-	XY_CURSOR = 0x0000;
-
-	for(int x = 0; x < 16; ++x)
+	while(true)
 	{
-		for(int y = 0; y < 16; ++y)
-		{
-			XY_CURSOR += 0x1000;
-		}
-		for(int y = 0; y < 0; ++y)
-		{
-			XY_CURSOR -= 0x1000;
-		}
+		XY_CURSOR = 0x0000;
 
-		XY_CURSOR += 0x0010;
-	}
-
-	for(int y = 0; y < 16; ++y)
-	{
 		for(int x = 0; x < 16; ++x)
 		{
+			for(int y = 0; y < 16; ++y)
+			{
+				XY_CURSOR += 0x1000;
+			}
+			for(int y = 0; y < 0; ++y)
+			{
+				XY_CURSOR -= 0x1000;
+			}
+
 			XY_CURSOR += 0x0010;
 		}
-		for(int x = 0; x < 0; ++x)
-		{
-			XY_CURSOR -= 0x0010;
-		}
 
-		XY_CURSOR += 0x1000;
+		for(int y = 0; y < 16; ++y)
+		{
+			for(int x = 0; x < 16; ++x)
+			{
+				XY_CURSOR += 0x0010;
+			}
+			for(int x = 0; x < 0; ++x)
+			{
+				XY_CURSOR -= 0x0010;
+			}
+
+			XY_CURSOR += 0x1000;
+		}
 	}
 }
 
