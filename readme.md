@@ -4,7 +4,7 @@ This library aims to simplify the process of rendering X-Y graphics. It provides
 
 ## Notes
 
-This library details the implementation and programming of a system that generates two analog voltages (X-Y). These signals may be used with an existing X-Y display (ex. oscilloscope), or with a custom X-Y renderer. For details on such a renderer see the sister respository (https://github.com/colebarach/Vector-CRT).
+This library details the implementation and programming of a system that generates two analog voltages (X-Y). These signals may be used with an existing X-Y display (ex. oscilloscope), or with a custom X-Y renderer. For details on such a renderer see the sister respository (https://github.com/colebarach/crt_xy_monitor).
 
 ## Usage
 
