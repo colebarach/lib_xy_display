@@ -12,6 +12,9 @@
 #include <pico/stdlib.h>
 #include <pico/multicore.h>
 
+// C Standard Libraries
+#include <math.h>
+
 // Constants ------------------------------------------------------------------------------------------------------------------
 
 #define RENDER_PERIOD_US  1
@@ -169,19 +172,22 @@ void xyShapeDeallocate(uint16_t* target)
     free(target);
 }
 
-uint16_t* xyShapeCopy(uint16_t* source, uint16_t sourceSize)
+void xyShapeCopy(uint16_t* source, uint16_t* destination, uint16_t sourceSize)
 {
-    // Allocate memory
-    uint16_t* destination = malloc(sizeof(uint16_t) * sourceSize);
-
     // Copy point values from source
     for(uint16_t index = 0; index < sourceSize; ++index)
     {
         destination[index] = source[index];
     }
+}
 
-    // Return shape
-    return destination;
+void xyShapeAppend(uint16_t* source, uint16_t* destination, uint16_t sourceSize, uint16_t destinationOffset, uint8_t xOffset, uint8_t yOffset)
+{
+    // Copy point values from source into offset position
+    for(uint16_t index = 0; index < sourceSize; ++index)
+    {
+        destination[index + destinationOffset] = source[index] + xOffset + yOffset * 256;
+    }
 }
 
 void xyShapeRotate(uint16_t* source, uint16_t* destination, uint16_t sourceSize, uint8_t xPivot, uint8_t yPivot, uint8_t theta)
@@ -195,5 +201,38 @@ void xyShapeRotate(uint16_t* source, uint16_t* destination, uint16_t sourceSize,
         int16_t yPrime = (x * sinLut256x256Signed[theta] + y * cosLut256x256Signed[theta]) / 127;
 
         destination[index] = (uint8_t)(xPrime + xPivot) + (uint8_t)(yPrime + yPivot) * 256;
+    }
+}
+
+void xyShapeScale(uint16_t* source, uint16_t* destination, uint16_t sourceSize, uint8_t xCenter, uint8_t yCenter, float xScale, float yScale)
+{
+    for(uint16_t index = 0; index < sourceSize; ++index)
+    {
+        int16_t x = (int16_t)(source[index] & 0x00FF)         - xCenter;
+        int16_t y = (int16_t)((source[index] & 0xFF00) / 256) - yCenter;
+
+        destination[index] = (uint8_t)(x * xScale + xCenter) + (uint8_t)(y * yScale + yCenter) * 256;
+    }
+}
+
+void xyShapeMultiply(uint16_t* source, uint16_t* destination, uint16_t sourceSize, uint8_t xCenter, uint8_t yCenter, int16_t xScale, int16_t yScale)
+{
+    for(uint16_t index = 0; index < sourceSize; ++index)
+    {
+        int16_t x = (int16_t)(source[index] & 0x00FF)         - xCenter;
+        int16_t y = (int16_t)((source[index] & 0xFF00) / 256) - yCenter;
+
+        destination[index] = (uint8_t)(x * xScale + xCenter) + (uint8_t)(y * yScale + yCenter) * 256;
+    }
+}
+
+void xyShapeDivide(uint16_t* source, uint16_t* destination, uint16_t sourceSize, uint8_t xCenter, uint8_t yCenter, int16_t xScale, int16_t yScale)
+{
+    for(uint16_t index = 0; index < sourceSize; ++index)
+    {
+        int16_t x = (int16_t)(source[index] & 0x00FF)         - xCenter;
+        int16_t y = (int16_t)((source[index] & 0xFF00) / 256) - yCenter;
+
+        destination[index] = (uint8_t)(x / xScale + xCenter) + (uint8_t)(y / yScale + yCenter) * 256;
     }
 }

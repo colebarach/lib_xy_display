@@ -9,6 +9,8 @@ pico_sdk_init()
 
 include_directories(include)
 
+add_subdirectory(examples)
+
 add_executable(main
     src/main.c
     src/xy_hardware.c
@@ -16,7 +18,5 @@ add_executable(main
     src/xy_shapes.c
     src/xy_math.c
 )
-
 pico_add_extra_outputs(main)
-
-target_link_libraries(main pico_stdlib pico_multicore pico_rand)
+target_link_libraries(main pico_stdlib pico_multicore)

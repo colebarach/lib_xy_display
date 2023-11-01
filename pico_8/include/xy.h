@@ -69,7 +69,7 @@ volatile struct xyShape xyRendererDemoGrid(uint16_t scale, uint16_t xIterations,
 		}
 	}
 
-	// xyRendererRenderShape();
+	xyRendererRenderShape(shape, shapeSize, 0, 0);
 }
 
 // Rendering Demo - Screen Grid
@@ -77,6 +77,52 @@ volatile struct xyShape xyRendererDemoGrid(uint16_t scale, uint16_t xIterations,
 void xyRendererDemoScreenGrid()
 {
 	xyRendererDemoGrid(15, 17, 17);
+}
+
+// Rendering Demo - Coin
+// - Call once to render a spinning coin to the screen
+// - Does not return
+void xyRendererDemoCoin()
+{
+	uint16_t circleSize = 256 + xyShapeSize16x16Ascii['C'] + xyShapeSize16x16Ascii['O'] + xyShapeSize16x16Ascii['I'] + xyShapeSize16x16Ascii['N'];
+
+    uint16_t* circleBase = xyShapeAllocate(circleSize);
+    uint16_t* circleOut  = xyShapeAllocate(circleSize);
+
+	uint16_t circleIndex = 0;
+    
+    for(uint16_t x = 0; x < 256; ++x)
+    {
+        circleBase[x] = cosLut256x256Unsigned[x] + (uint16_t)sinLut256x256Unsigned[x] * 256;
+    }
+	circleIndex += 256;
+
+	// Scale circle down
+    xyShapeDivide(circleBase, circleBase, circleSize, 128, 128, 2, 2);
+
+	// Add text
+    xyShapeAppend(xyShape16x16Ascii['C'], circleBase, xyShapeSize16x16Ascii['C'], circleIndex, 96, 122);
+	circleIndex += xyShapeSize16x16Ascii['C'];
+    xyShapeAppend(xyShape16x16Ascii['O'], circleBase, xyShapeSize16x16Ascii['O'], circleIndex, 112, 122);
+	circleIndex += xyShapeSize16x16Ascii['O'];
+    xyShapeAppend(xyShape16x16Ascii['I'], circleBase, xyShapeSize16x16Ascii['I'], circleIndex, 128, 122);
+	circleIndex += xyShapeSize16x16Ascii['I'];
+    xyShapeAppend(xyShape16x16Ascii['N'], circleBase, xyShapeSize16x16Ascii['N'], circleIndex, 144, 122);
+	circleIndex += xyShapeSize16x16Ascii['N'];
+
+    xyRendererRenderShape(circleOut, circleSize, 0, 0);
+
+    int theta = 0;
+
+    while(true)
+    {
+        xyShapeScale(circleBase, circleOut, circleSize, 128, 128, cosLut256x256Signed[theta] / 128.0, 1.0);
+
+        sleep_ms(10);
+
+        ++theta;
+        if(theta >= 256) theta = 0;
+    }
 }
 
 // Drawing Demos --------------------------------------------------------------------------------------------------------------

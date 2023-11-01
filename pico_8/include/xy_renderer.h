@@ -68,13 +68,31 @@ uint16_t* xyShapeAllocate(uint16_t size);
 void xyShapeDeallocate(uint16_t* target);
 
 // Copy Shape
-// - Call to copy the points and position of a shape into a new shape (dynamic allocation).
-// - Shape must be de-allocated when no longer in use.
-uint16_t* xyShapeCopy(uint16_t* source, uint16_t sourceSize);
+// - Call to copy the points of the source shape into the destination shape
+// - The size of the destination must be greater than or equal to the size of the source shape
+void xyShapeCopy(uint16_t* source, uint16_t* destination, uint16_t sourceSize);
+
+void xyShapeAppend(uint16_t* source, uint16_t* destination, uint16_t sourceSize, uint16_t destinationOffset, uint8_t xOffset, uint8_t yOffset);
 
 // Rotate Shape
 // - Call to rotate the points about the specified pivot by a specified angle
 // - Theta is an 8-bit unsigned integer, mapping [0, 2PI) to [0, 256)
+// - Source and destination may be the same array, in which the original data of the source is lost
 void xyShapeRotate(uint16_t* source, uint16_t* destination, uint16_t sourceSize, uint8_t xPivot, uint8_t yPivot, uint8_t theta);
+
+// Scale Shape
+void xyShapeScale(uint16_t* source, uint16_t* destination, uint16_t sourceSize, uint8_t xCenter, uint8_t yCenter, float xScale, float yScale);
+
+// Multiply Shape
+// - Call to scale a shape up about the specified origin
+// - The distance to the origin of each point is multiplied by xScale and yScale
+// - Source and destination may be the same array, in which the original data of the source is lost
+void xyShapeMultiply(uint16_t* source, uint16_t* destination, uint16_t sourceSize, uint8_t xCenter, uint8_t yCenter, int16_t xScale, int16_t yScale);
+
+// Divide Shape
+// - Call to scale a shape down about the specified origin
+// - The distance to the origin of each point is divided by xScale and yScale
+// - Source and destination may be the same array, in which the original data of the source is lost
+void xyShapeDivide(uint16_t* source, uint16_t* destination, uint16_t sourceSize, uint8_t xCenter, uint8_t yCenter, int16_t xScale, int16_t yScale);
 
 #endif // XY_RENDERER_H
