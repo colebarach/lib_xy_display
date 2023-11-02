@@ -17,13 +17,14 @@ Requirements:
 - GNU ARM toolchain for embedded systems
 - Raspberry Pi Pico C SDK
 
-Steps:
+Compiling the library:
 
- - Open a command line with the working directory set to the pico_8/build directory.
- - Run 'cmake ..' to generate the makefile for the build.
- - Run 'make' to compile the library and the 'main.c' application.
- - Make will have generated a 'main.uf2' file in the build directory, flash this to the Pico.
- - The Pico will reboot, now running the main application.
+- Create a new directory for the build files in the `pico_8` folder, ex. `build`.
+- Open a command line with the working directory set to this directory.
+- Run `cmake ..` to generate the build files.
+- Run make to compile the library and examples.
+- The previous set will have generated a `libxy.a` file and an `examples` directory. In the examples directory you will find a number of `.utf` files, these may be flashed to the pico directly.
+- To use the library in a standalone application, simply link the static library `libxy.a` and include the needed header files.
 
 ## Hardware
 
