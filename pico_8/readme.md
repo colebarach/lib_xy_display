@@ -22,9 +22,9 @@ Compiling the library:
 - Create a new directory for the build files in the `pico_8` folder, ex. `build`.
 - Open a command line with the working directory set to this directory.
 - Run `cmake ..` to generate the build files.
-- Run make to compile the library and examples.
-- The previous set will have generated a `libxy.a` file and an `examples` directory. In the examples directory you will find a number of `.utf` files, these may be flashed to the pico directly.
-- To use the library in a standalone application, simply link the static library `libxy.a` and include the needed header files.
+- Run `make` to compile the library and examples.
+- The previous step will have generated a `libxy.a` file and an `examples` directory. In the examples directory you will find a number of `.utf` files, these may be flashed to the pico directly.
+- To use the library in a standalone application, simply link the static library `libxy.a` and include the needed header files. See the example cmake files for details.
 
 ## Hardware
 
