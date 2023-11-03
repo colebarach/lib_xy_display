@@ -1,6 +1,6 @@
 # XY Display Library
 
-This library aims to simplify the process of rendering X-Y graphics. It provides a common interface for generating X-Y waveforms on a variety of platforms, see below for a list of implementations.
+This library aims to simplify the process of rendering X-Y graphics. It provides a common interface for generating X-Y waveforms on a variety of platforms, see the repository filesystem for a list of implementations.
 
 ## Notes
 
