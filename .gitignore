@@ -1,4 +1,4 @@
 bin/*
 .vscode/*
 
-examples/pico/build/*
+*/build/*
