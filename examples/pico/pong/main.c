@@ -7,7 +7,7 @@
 // Libraries ------------------------------------------------------------------------------------------------------------------
 
 // X-Y Library
-#include <xy.h>
+#include <xy_renderer.h>
 
 // Pico Standard Library
 #include <pico/stdlib.h>
@@ -174,7 +174,7 @@ int main()
 
     // Event Loop -------------------------------------------------------------------------------------------------------------
 
-    while(1)
+    while(true)
     {
         // Update ball position
         ballPositionX += ballVelocityX;

@@ -1,10 +1,10 @@
-add_executable(pong
+add_executable(asteroids
     main.c
 )
 
-pico_add_extra_outputs(pong)
+pico_add_extra_outputs(asteroids)
 
-target_link_libraries(pong
+target_link_libraries(asteroids
     ${CMAKE_SOURCE_DIR}/../../bin/pico/libxy.a
     pico_stdlib
     pico_multicore
