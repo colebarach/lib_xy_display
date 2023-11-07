@@ -5,7 +5,7 @@ add_executable(asteroids
 pico_add_extra_outputs(asteroids)
 
 target_link_libraries(asteroids
-    ${CMAKE_SOURCE_DIR}/../../bin/pico/libxy.a
+    ${CMAKE_SOURCE_DIR}/../../bin/pico/libxy/libxy.a
     pico_stdlib
     pico_multicore
 )

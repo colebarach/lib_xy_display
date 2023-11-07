@@ -7,7 +7,7 @@
 // Libraries ------------------------------------------------------------------------------------------------------------------
 
 // X-Y Library
-#include <xy_renderer.h>
+#include <xy.h>
 
 // Pico Standard Library
 #include <pico/stdlib.h>
@@ -70,7 +70,7 @@ int main()
     float shipVelocityY = 0.0f;          // Y velocity of the ship in pixels per 30ms
 
     float shipRotation  = 0.0f;          // Rotation of the ship, [0, 256) mapped to [0 to 2PI)
-    float shipAnglularVelocity = 0.0f    // Angular velocity of the ship in radians per 30ms. (same mapping as above)
+    float shipAnglularVelocity = 0.0f;   // Angular velocity of the ship in radians per 30ms. (same mapping as above)
 
     // Game State -------------------------------------------------------------------------------------------------------------
 

@@ -7,7 +7,7 @@
 // Libraries ------------------------------------------------------------------------------------------------------------------
 
 // X-Y Library
-#include <xy_renderer.h>
+#include <xy.h>
 
 // Pico Standard Library
 #include <pico/stdlib.h>

@@ -10,13 +10,13 @@ pico_sdk_init()
 
 include(libxy_import.cmake)
 
-add_executable(pong
+add_executable(example_standalone
     src/main.c
 )
 
-pico_add_extra_outputs(pong)
+pico_add_extra_outputs(example_standalone)
 
-target_link_libraries(pong
+target_link_libraries(example_standalone
     ${LIB_XY_LINK}
     pico_stdlib
     pico_multicore

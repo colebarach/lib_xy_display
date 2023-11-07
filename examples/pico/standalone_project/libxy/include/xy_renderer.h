@@ -18,6 +18,7 @@
 // - How should the null shape be handled? It may need changed for strings. (Consider screen burn-in)
 // - Reimplement string, overhaul methods
 // - Does xy hardware need included here, it defines a lot of functions not used by the end user
+// - Consider implementing rotations into the render loop, would save a lot of time copying and translating into buffers.
 
 // Includes -------------------------------------------------------------------------------------------------------------------
 
