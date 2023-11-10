@@ -133,16 +133,17 @@ void rendererInterrupt()
     {
         stackPointIndex = 0;
         ++stackShapeIndex;
-
-        // Keep stack index within stack
-        if(stackShapeIndex >= stackTop) stackShapeIndex = 0;
     }
 
-    // Ignore null shape
-    if(renderStack[stackShapeIndex].points == NULL || renderStack[stackShapeIndex].pointCount == 0) return;
+    // Keep stack index within stack
+    if(stackShapeIndex >= stackTop) stackShapeIndex = 0;
 
-    // Ignore hidden shapes
-    if(!renderStack[stackShapeIndex].visible) return;
+    // Ignore hidden and null shapes
+    if(!renderStack[stackShapeIndex].visible || renderStack[stackShapeIndex].points == NULL || renderStack[stackShapeIndex].pointCount == 0)
+    {
+        ++stackShapeIndex;
+        return;
+    }
 
     // Update cursor
     xyCursorSet(renderStack[stackShapeIndex].points[stackPointIndex].x + renderStack[stackShapeIndex].positionX, renderStack[stackShapeIndex].points[stackPointIndex].y + renderStack[stackShapeIndex].positionY);

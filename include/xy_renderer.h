@@ -13,6 +13,7 @@
 // Naming: This library reserves the 'xy' prefix, see the below prototypes for specifics.
 // 
 // To do:
+// - Render stack seems to overflow at 23 items, not sure why.
 // - String objects would be nice, need an internal stack for that
 // - Render period is only approximate right now, specific timing may help with inconsistent appearances
 // - How should the null shape be handled? It may need changed for strings. (Consider screen burn-in)
