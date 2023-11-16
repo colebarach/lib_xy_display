@@ -12,10 +12,14 @@
 // X-Y Library
 #include <xy.h>
 
+// Game Rules -----------------------------------------------------------------------------------------------------------------
+
+#define BULLET_VELOCITY         8.0f     // Speed of bullets in pixels per 30ms.
+
 // Models ---------------------------------------------------------------------------------------------------------------------
 
 #define BULLET_CENTER_OF_MASS_X 0x03     //
-#define BULLET_CENTER_OF_MASS_Y 0x01     //
+#define BULLET_CENTER_OF_MASS_Y 0x03     //
 #define BULLET_SIZE_X           0x07     //
 #define BULLET_SIZE_Y           0x03     //
 
@@ -50,6 +54,9 @@ struct bullet_t
 void bulletInitialize(struct bullet_t* bullet);
 
 //
+void bulletSpawn(struct bullet_t* bullet, float positionX, float positionY, float rotation, float velocity);
+
+//
 void bulletUpdate(struct bullet_t* bullet);
 
 //
@@ -60,8 +67,9 @@ void bulletRender(struct bullet_t* bullet);
 //
 void bulletBufferInitialize(struct bullet_t* bullets, uint16_t bufferSize);
 
-//
-void bulletBufferInsert(struct bullet_t* bullets, uint16_t bufferSize, float positionX, float positionY, float rotation, float velocity);
+// Spawn Bullet into Buffer
+// - Call to spawn a bullet at the given position and rotation
+int16_t bulletBufferSpawn(struct bullet_t* bullets, uint16_t bufferSize, float positionX, float positionY, float rotation, float velocity);
 
 //
 void bulletBufferRemove(struct bullet_t* bullets, uint16_t bufferSize, uint16_t index);

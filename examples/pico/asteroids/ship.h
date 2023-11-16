@@ -10,6 +10,7 @@
 // To do:
 // - The models don't really need exposed, should they be moved to the source file?
 // - The screen size is hard-coded, how to handle this properly?
+// - The ship model, when rotated, overflows due to negative numbers. Every rectangular model that is rotated has this problem.
 
 // Libraries ------------------------------------------------------------------------------------------------------------------
 
@@ -17,8 +18,6 @@
 #include <xy.h>
 
 // Game Rules -----------------------------------------------------------------------------------------------------------------
-
-#define SHIP_DEFAULT_LIFE_COUNT   4
 
 #define SHIP_ACCELERATION_Y       0.2f   // Acceleration of the ship (forward / backward) in pixels per (30ms)^2.
 #define SHIP_ANGULAR_ACCELERATION 0.03f  // Angular acceleration of the ship (left / right) in pixels per (30ms)^2.
@@ -31,13 +30,13 @@
 #define SIZE_SHIP_MODEL              25        // Max size of all ship models (see options below).
 
 #define SHIP_CENTER_OF_MASS_X        0x09      // X position of the center of the ship (rotation pivot).
-#define SHIP_CENTER_OF_MASS_Y        0x06      // Y position of the center of the ship (rotation pivot).
+#define SHIP_CENTER_OF_MASS_Y        0x09      // Y position of the center of the ship (rotation pivot).
 #define SHIP_COLLIDER_GUN_X          0x12      // X position of the top of the ship (gun).
-#define SHIP_COLLIDER_GUN_Y          0x06      // Y position of the top of the ship (gun).
+#define SHIP_COLLIDER_GUN_Y          0x09      // Y position of the top of the ship (gun).
 #define SHIP_COLLIDER_BOTTOM_LEFT_X  0x00      // X position of the bottom left corner of the ship (when viewed vertically).
-#define SHIP_COLLIDER_BOTTOM_LEFT_Y  0x0C      // Y position of the bottom left corner of the ship (when viewed vertically).
+#define SHIP_COLLIDER_BOTTOM_LEFT_Y  0x0F      // Y position of the bottom left corner of the ship (when viewed vertically).
 #define SHIP_COLLIDER_BOTTOM_RIGHT_X 0x00      // X position of the bottom right corner of the ship (when viewed vertically).
-#define SHIP_COLLIDER_BOTTOM_RIGHT_Y 0x00      // Y position of the bottom right corner of the ship (when viewed vertically).
+#define SHIP_COLLIDER_BOTTOM_RIGHT_Y 0x03      // Y position of the bottom right corner of the ship (when viewed vertically).
 
 // Model to render when not moving
 #define SIZE_SHIP_MODEL_IDLE 17
@@ -53,8 +52,6 @@ extern struct xyPoint shipModelAccelerating[SIZE_SHIP_MODEL_ACCELERATING];
 // - Object containing all properties related to a ship.
 struct ship_t
 {
-    int16_t lives;                       // Number of extra lives (if below 0, game-over)
-
     float positionY;                     // Y position of the ship in pixels.
     float positionX;                     // X position of the ship in pixels.
     float velocityX;                     // X velocity of the ship in pixels per 30ms.

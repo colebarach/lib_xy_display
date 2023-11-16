@@ -8,6 +8,7 @@
 // - Total number of models in buffer cannot exceed 23, why?
 // - The insert functions are getting complex, should there be a dedicated 'bulletCreate' function?
 // - Give player invincibility frames
+// - Asteroids clipping offscreen can only be hit from one side
 
 // Libraries ------------------------------------------------------------------------------------------------------------------
 
@@ -35,16 +36,13 @@
 #define BUTTON_PIN_RIGHT 19              // GPIO pin number of the right button.
 #define BUTTON_PIN_SHOOT 17              // GPIO pin number of the down button.
 
-#define BULLET_VELOCITY           8.0f   // Speed of bullets in pixels per 30ms.
+// Game Rules -----------------------------------------------------------------------------------------------------------------
 
 #define SIZE_BULLET_BUFFER        8      // Maximum number of bullet objects.
 #define SIZE_ASTEROID_BUFFER      12     // Maximum number of asteroid objects.
 
-// Spawning -------------------------------------------------------------------------------------------------------------------
-
-void spawnBullet(struct ship_t* ship, struct bullet_t* bulletBuffer, uint16_t bulletBufferSize);
-
-void spawnAsteroid(struct asteroid_t* asteroids, uint16_t bufferSize, int16_t size);
+#define SHIP_DEFAULT_LIFE_COUNT   4      // Number of starting lives for the ship.
+#define ASTEROID_SPAWN_COUNT      8      // Number of asteroids to spawn in a wave.
 
 // I/O ------------------------------------------------------------------------------------------------------------------------
 
@@ -68,77 +66,84 @@ int main()
 
     inputInitialize();
 
-    // Objects ----------------------------------------------------------------------------------------------------------------
-
-    struct ship_t ship;
-    shipInitialize(&ship, 128.0f - SHIP_CENTER_OF_MASS_X, 128.0f - SHIP_CENTER_OF_MASS_Y);
-
-    struct bullet_t bullets[SIZE_BULLET_BUFFER];
-    bulletBufferInitialize(bullets, SIZE_BULLET_BUFFER);
-
-    struct asteroid_t asteroids[SIZE_ASTEROID_BUFFER];
-    asteroidBufferInitialize(asteroids, SIZE_ASTEROID_BUFFER);
-
-    for(uint16_t index = 0; index < 8; ++index)
-    {
-        spawnAsteroid(asteroids, SIZE_ASTEROID_BUFFER, -1);
-    }
-
-    // Event Loop -------------------------------------------------------------------------------------------------------------
+    // Play Loop --------------------------------------------------------------------------------------------------------------
 
     while(true)
     {
-        // Get input
-        inputGet(&ship, bullets, SIZE_BULLET_BUFFER);
+        // Game Data ----------------------------------------------------------------------------------------------------------
 
-        // Update objects
-        shipUpdate(&ship);
-        bulletBufferUpdate(bullets, SIZE_BULLET_BUFFER);
-        asteroidBufferUpdate(asteroids, SIZE_ASTEROID_BUFFER);
+        int8_t asteroidSpeed = 1;
+        int8_t playerLives   = SHIP_DEFAULT_LIFE_COUNT;
 
-        // Check collision
-        collideBuffersBulletAsteroid(bullets, SIZE_BULLET_BUFFER, asteroids, SIZE_ASTEROID_BUFFER);
-        bool playerHit = collideBufferShipAsteroid(&ship, asteroids, SIZE_ASTEROID_BUFFER);
+        // Objects ------------------------------------------------------------------------------------------------------------
 
-        // Check player lives
-        if(playerHit)
+        struct ship_t ship;
+        shipInitialize(&ship, xyWidth() / 2.0f - SHIP_CENTER_OF_MASS_X, xyHeight() / 2.0f - SHIP_CENTER_OF_MASS_Y);
+
+        struct bullet_t bullets[SIZE_BULLET_BUFFER];
+        bulletBufferInitialize(bullets, SIZE_BULLET_BUFFER);
+
+        struct asteroid_t asteroids[SIZE_ASTEROID_BUFFER];
+        asteroidBufferInitialize(asteroids, SIZE_ASTEROID_BUFFER);
+
+        // Spawn initial asteroids
+        for(uint16_t index = 0; index < ASTEROID_SPAWN_COUNT; ++index)
         {
-            --ship.lives;
-            shipRespawn(&ship);
+            asteroidBufferSpawn(asteroids, SIZE_ASTEROID_BUFFER, -1, -1, 0.0f, xyWidth(), 0.0f, xyHeight());
         }
 
-        // Render objects
-        shipRender(&ship);
-        bulletBufferRender(bullets, SIZE_BULLET_BUFFER);
-        asteroidBufferRender(asteroids, SIZE_ASTEROID_BUFFER);
+        // Event Loop ---------------------------------------------------------------------------------------------------------
 
-        // Event loop period
-        sleep_ms(30);
+        while(true)
+        {
+            // Get input
+            inputGet(&ship, bullets, SIZE_BULLET_BUFFER);
+
+            // Update objects
+            shipUpdate(&ship);
+            bulletBufferUpdate(bullets, SIZE_BULLET_BUFFER);
+            asteroidBufferUpdate(asteroids, SIZE_ASTEROID_BUFFER);
+
+            // Check collision
+            collideBuffersBulletAsteroid(bullets, SIZE_BULLET_BUFFER, asteroids, SIZE_ASTEROID_BUFFER);
+            bool playerHit = collideBufferShipAsteroid(&ship, asteroids, SIZE_ASTEROID_BUFFER);
+
+            // Check player lives
+            if(playerHit)
+            {
+                --playerLives;
+
+                // Reset game if out of lives
+                if(playerLives < 0) break;
+
+                shipRespawn(&ship);
+            }
+
+            // Check for no remaining asteroids
+            if(asteroidBufferCountActive(asteroids, SIZE_ASTEROID_BUFFER) == 0)
+            {
+                for(uint16_t index = 0; index < ASTEROID_SPAWN_COUNT; ++index)
+                {
+                    if(asteroidSpeed < 8) ++asteroidSpeed;
+                    asteroidBufferSpawn(asteroids, SIZE_ASTEROID_BUFFER, -1, asteroidSpeed, 0.0f, xyWidth(), 0.0f, xyHeight());
+                }
+            }
+
+            // Render objects
+            shipRender(&ship);
+            bulletBufferRender(bullets, SIZE_BULLET_BUFFER);
+            asteroidBufferRender(asteroids, SIZE_ASTEROID_BUFFER);
+
+            // Event loop period
+            sleep_ms(30);
+        }
+
+        // Clear the render stack for reset
+        xyRendererClearStack();
     }
 }
 
 // Function Definitions -------------------------------------------------------------------------------------------------------
-
-void spawnBullet(struct ship_t* ship, struct bullet_t* bulletBuffer, uint16_t bulletBufferSize)
-{
-    float positionX = ship->colliderGunX + ship->positionX;
-    float positionY = ship->colliderGunY + ship->positionY;
-
-    bulletBufferInsert(bulletBuffer, bulletBufferSize, positionX, positionY, ship->rotation, BULLET_VELOCITY);
-}
-
-void spawnAsteroid(struct asteroid_t* asteroids, uint16_t bufferSize, int16_t size)
-{
-    if(size == -1) size = get_rand_32() % 2 + 2;
-
-    float radius = size * 4 + 4;
-
-    int16_t index = asteroidBufferInsert(asteroids, bufferSize, get_rand_32() % 256, get_rand_32() % 256, radius);
-    if(index == -1) return;
-    asteroids[index].velocityX = (get_rand_32() % 16) / 16.0f - 0.5f;
-    asteroids[index].velocityY = (get_rand_32() % 16) / 16.0f - 0.5f;
-    asteroids[index].angularVelocity = (get_rand_32() % 16) / 64.0f - 0.125f;
-}
 
 void inputInitialize()
 {
@@ -192,7 +197,7 @@ void inputGet(struct ship_t* playerShip, struct bullet_t* bulletBuffer, uint16_t
         if(playerShip->reloaded)
         {
             playerShip->reloaded = false;
-            spawnBullet(playerShip, bulletBuffer, bulletBufferSize);
+            bulletBufferSpawn(bulletBuffer, bulletBufferSize, playerShip->colliderGunX + playerShip->positionX, playerShip->colliderGunY + playerShip->positionY, playerShip->rotation, BULLET_VELOCITY);
         }
     }
     else

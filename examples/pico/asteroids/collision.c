@@ -62,54 +62,23 @@ bool collideBufferShipAsteroid(struct ship_t* ship, struct asteroid_t* asteroids
 
 void collideBuffersBulletAsteroid(struct bullet_t* bullets, uint16_t bulletBufferSize, struct asteroid_t* asteroids, uint16_t asteroidBufferSize)
 {
+    // Compare all bullets and all asteroids for collisions
     for(uint16_t bulletIndex = 0; bulletIndex < bulletBufferSize; ++bulletIndex)
     {
+        // Skip inactive bullets
         if(!bullets[bulletIndex].active) continue;
 
         for(uint16_t asteroidIndex = 0; asteroidIndex < asteroidBufferSize; ++asteroidIndex)
         {
+            // Skip inactive asteroids
             if(!asteroids[asteroidIndex].active) continue;
 
+            // Check for hit
             if(collideBulletAsteroid(&bullets[bulletIndex], &asteroids[asteroidIndex]))
             {
+                // Remove bullet and split asteroid
                 bulletBufferRemove(bullets, bulletBufferSize, bulletIndex);
-
-                // Check asteroid size
-                if(asteroids[asteroidIndex].colliderRadius >= 8)
-                {
-                    // Split large asteroids
-                    float parentRadius    = asteroids[asteroidIndex].colliderRadius;
-                    float parentPositionX = asteroids[asteroidIndex].positionX;
-                    float parentPositionY = asteroids[asteroidIndex].positionY;
-                    float parentVelocityX = asteroids[asteroidIndex].velocityX;
-                    float parentVelocityY = asteroids[asteroidIndex].velocityY;
-
-                    asteroidBufferRemove(asteroids, asteroidBufferSize, asteroidIndex);
-
-                    int16_t child0 = asteroidBufferInsert(asteroids, asteroidBufferSize, parentPositionX, parentPositionY, parentRadius - 4);
-                    int16_t child1 = asteroidBufferInsert(asteroids, asteroidBufferSize, parentPositionX, parentPositionY, parentRadius - 4);
-
-                    if(child0 != -1)
-                    {
-                        float angle = (get_rand_32() % 16) / 16.0f * (ASTEROID_SPLIT_ANGLE_MAX - ASTEROID_SPLIT_ANGLE_MIN) + ASTEROID_SPLIT_ANGLE_MIN;
-                        asteroids[child0].velocityX = ASTEROID_SPLIT_SPEEDUP * (parentVelocityX * cosf(angle) - parentVelocityY * sinf(angle));
-                        asteroids[child0].velocityY = ASTEROID_SPLIT_SPEEDUP * (parentVelocityX * sinf(angle) + parentVelocityY * cosf(angle));
-                        asteroids[child0].angularVelocity = (get_rand_32() % 16) / 64.0f;
-                    }
-                    if(child1 != -1)
-                    {
-                        float angle = -(get_rand_32() % 16) / 16.0f * (ASTEROID_SPLIT_ANGLE_MAX - ASTEROID_SPLIT_ANGLE_MIN) - ASTEROID_SPLIT_ANGLE_MIN;
-                        asteroids[child1].velocityX = ASTEROID_SPLIT_SPEEDUP * (parentVelocityX * cosf(angle) - parentVelocityY * sinf(angle));
-                        asteroids[child1].velocityY = ASTEROID_SPLIT_SPEEDUP * (parentVelocityX * sinf(angle) + parentVelocityY * cosf(angle));
-                        asteroids[child1].angularVelocity = -(get_rand_32() % 16) / 64.0f;
-                    }
-                }
-                else
-                {
-                    // Remove small asteroids
-                    asteroidBufferRemove(asteroids, asteroidBufferSize, asteroidIndex);
-                }
-
+                asteroidBufferSplit(asteroids, asteroidBufferSize, asteroidIndex);
                 continue;
             }
         }

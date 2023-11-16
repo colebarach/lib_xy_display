@@ -18,25 +18,22 @@
 #include "bullet.h"
 #include "asteroid.h"
 
-// Game Rules -----------------------------------------------------------------------------------------------------------------
-
-#define ASTEROID_SPLIT_ANGLE_MIN  0.196f
-#define ASTEROID_SPLIT_ANGLE_MAX  0.785f
-
-#define ASTEROID_SPLIT_SPEEDUP    1.15f
-
 // Object Functions -----------------------------------------------------------------------------------------------------------
 
-//
+// Ship to Asteroid Collision
+// - Check to see if the specified ship is intersecting the specified asteroid.
+// - Returns true if a collision has occured, false otherwise.
 bool collideShipAsteroid(struct ship_t* ship, struct asteroid_t* asteroid);
 
-//
-bool collideBufferShipAsteroid(struct ship_t* ship, struct asteroid_t* asteroids, uint16_t asteroidBufferSize);
+// Bullet to Asteroid Collision
+// - Check to see if the specified bullet is intersecting the specified asteroid.
+// - Returns true if a collision has occured, false otherwise.
+bool collideBulletAsteroid(struct bullet_t* bullet, struct asteroid_t* asteroid);
 
 // Buffer Functions -----------------------------------------------------------------------------------------------------------
 
 //
-bool collideBulletAsteroid(struct bullet_t* bullet, struct asteroid_t* asteroid);
+bool collideBufferShipAsteroid(struct ship_t* ship, struct asteroid_t* asteroids, uint16_t asteroidBufferSize);
 
 //
 void collideBuffersBulletAsteroid(struct bullet_t* bullets, uint16_t bulletBufferSize, struct asteroid_t* asteroids, uint16_t asteroidBufferSize);
