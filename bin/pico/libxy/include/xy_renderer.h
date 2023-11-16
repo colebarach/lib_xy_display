@@ -13,16 +13,23 @@
 // Naming: This library reserves the 'xy' prefix, see the below prototypes for specifics.
 // 
 // To do:
+// - Render stack seems to overflow at 23 items, not sure why.
 // - String objects would be nice, need an internal stack for that
 // - Render period is only approximate right now, specific timing may help with inconsistent appearances
 // - How should the null shape be handled? It may need changed for strings. (Consider screen burn-in)
 // - Reimplement string, overhaul methods
 // - Does xy hardware need included here, it defines a lot of functions not used by the end user
 // - Consider implementing rotations into the render loop, would save a lot of time copying and translating into buffers.
+// - Hiding a shape still consumes a cycle, this can cause burn-in. How to fix this without recursion?
 
 // Includes -------------------------------------------------------------------------------------------------------------------
 
 #include "xy_hardware.h"
+
+// Libraries ------------------------------------------------------------------------------------------------------------------
+
+// C Standard Libraries
+#include <stdbool.h>
 
 // Datatypes ------------------------------------------------------------------------------------------------------------------
 
@@ -32,6 +39,7 @@ struct xyShape
     uint16_t        pointCount;          // Number of elements in the point array
     xyCoord         positionX;           // X offset of the shape
     xyCoord         positionY;           // Y offset of the shape
+    bool            visible;             // Indicates whether to render the shape or not
 };
 
 // Rendering ------------------------------------------------------------------------------------------------------------------

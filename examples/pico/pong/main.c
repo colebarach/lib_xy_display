@@ -17,8 +17,8 @@
 
 // Inputs ---------------------------------------------------------------------------------------------------------------------
 
-#define BUTTON_PIN_PADDLE_0_UP   18      // GPIO pin number of paddle 0's up button 
-#define BUTTON_PIN_PADDLE_0_DOWN 19      // GPIO pin number of paddle 0's down button
+#define BUTTON_PIN_PADDLE_0_UP   16      // GPIO pin number of paddle 0's up button
+#define BUTTON_PIN_PADDLE_0_DOWN 17      // GPIO pin number of paddle 0's down button
 #define BUTTON_PIN_PADDLE_1_UP   20      // GPIO pin number of paddle 1's up button
 #define BUTTON_PIN_PADDLE_1_DOWN 21      // GPIO pin number of paddle 1's down button
 

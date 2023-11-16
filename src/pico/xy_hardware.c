@@ -14,11 +14,11 @@
 
 // Cursor X
 // - Maps an unsigned integer X to the cursor bitfield
-#define XY_CURSOR_X(x) (x)
+#define XY_CURSOR_X(x) (x & 0xFF)
 
 // Cursor Y
 // - Maps an unsigned integer Y to the cursor bitfield
-#define XY_CURSOR_Y(y) (y << 8)
+#define XY_CURSOR_Y(y) ((y & 0xFF) << 8)
 
 // Update Delay
 // - Function to block execution for 1 update period

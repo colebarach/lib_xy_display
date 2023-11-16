@@ -46,14 +46,12 @@ volatile struct xyShape* xyRendererRenderShape(struct xyPoint* points, uint16_t 
     // Check for full stack
     if(stackTop >= RENDER_STACK_SIZE) return NULL;
 
-    // Ignore null shape
-    if(points == NULL || pointCount == 0) return NULL;
-
     // Write shape to stack and update top
     renderStack[stackTop].points     = points;
     renderStack[stackTop].pointCount = pointCount;
     renderStack[stackTop].positionX  = positionX;
     renderStack[stackTop].positionY  = positionY;
+    renderStack[stackTop].visible    = true;
     ++stackTop;
 
     // Return a reference to the new shape
@@ -135,13 +133,17 @@ void rendererInterrupt()
     {
         stackPointIndex = 0;
         ++stackShapeIndex;
-
-        // Keep stack index within stack
-        if(stackShapeIndex >= stackTop) stackShapeIndex = 0;
     }
 
-    // Ignore null shape
-    if(renderStack[stackShapeIndex].points == NULL || renderStack[stackShapeIndex].pointCount == 0) return;
+    // Keep stack index within stack
+    if(stackShapeIndex >= stackTop) stackShapeIndex = 0;
+
+    // Ignore hidden and null shapes
+    if(!renderStack[stackShapeIndex].visible || renderStack[stackShapeIndex].points == NULL || renderStack[stackShapeIndex].pointCount == 0)
+    {
+        ++stackShapeIndex;
+        return;
+    }
 
     // Update cursor
     xyCursorSet(renderStack[stackShapeIndex].points[stackPointIndex].x + renderStack[stackShapeIndex].positionX, renderStack[stackShapeIndex].points[stackPointIndex].y + renderStack[stackShapeIndex].positionY);
