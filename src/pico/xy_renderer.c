@@ -43,7 +43,7 @@ void rendererEntrypoint();
 
 // Function Definitions -------------------------------------------------------------------------------------------------------
 
-volatile struct xyShape* xyRendererRenderShape(struct xyPoint* points, uint16_t pointCount, xyCoord positionX, xyCoord positionY)
+volatile struct xyShape* xyRendererRenderShape(volatile struct xyPoint* points, uint16_t pointCount, xyCoord positionX, xyCoord positionY)
 {
     // Check for full stack
     if(stackTop >= RENDER_STACK_SIZE) return NULL;
@@ -184,12 +184,7 @@ struct xyPoint* xyShapeAllocate(uint16_t size)
     return destination;
 }
 
-void xyShapeDeallocate(struct xyPoint* target)
-{
-    free(target);
-}
-
-void xyShapeCopy(struct xyPoint* source, struct xyPoint* destination, uint16_t sourceSize, xyCoord originX, xyCoord originY)
+void xyShapeCopy(volatile struct xyPoint* source, volatile struct xyPoint* destination, uint16_t sourceSize, xyCoord originX, xyCoord originY)
 {
     // Copy point values from source
     for(uint16_t index = 0; index < sourceSize; ++index)
@@ -199,7 +194,7 @@ void xyShapeCopy(struct xyPoint* source, struct xyPoint* destination, uint16_t s
     }
 }
 
-void xyShapeAppend(struct xyPoint* source, struct xyPoint* destination, uint16_t sourceSize, uint16_t destinationIndex, xyCoord originX, xyCoord originY)
+void xyShapeAppend(volatile struct xyPoint* source, volatile struct xyPoint* destination, uint16_t sourceSize, uint16_t destinationIndex, xyCoord originX, xyCoord originY)
 {
     // Copy point values from source starting from destination index
     for(uint16_t index = 0; index < sourceSize; ++index)
@@ -209,7 +204,7 @@ void xyShapeAppend(struct xyPoint* source, struct xyPoint* destination, uint16_t
     }
 }
 
-void xyShapeRotate(struct xyPoint* source, struct xyPoint* destination, uint16_t sourceSize, xyCoord originX, xyCoord originY, uint8_t theta)
+void xyShapeRotate(volatile struct xyPoint* source, volatile struct xyPoint* destination, uint16_t sourceSize, xyCoord originX, xyCoord originY, uint8_t theta)
 {
     for(uint16_t index = 0; index < sourceSize; ++index)
     {
@@ -224,7 +219,7 @@ void xyShapeRotate(struct xyPoint* source, struct xyPoint* destination, uint16_t
     }
 }
 
-void xyShapeScale(struct xyPoint* source, struct xyPoint* destination, uint16_t sourceSize, xyCoord originX, xyCoord originY, float scalarX, float scalarY)
+void xyShapeScale(volatile struct xyPoint* source, volatile struct xyPoint* destination, uint16_t sourceSize, xyCoord originX, xyCoord originY, float scalarX, float scalarY)
 {
     for(uint16_t index = 0; index < sourceSize; ++index)
     {
@@ -236,7 +231,7 @@ void xyShapeScale(struct xyPoint* source, struct xyPoint* destination, uint16_t 
     }
 }
 
-void xyShapeMultiply(struct xyPoint* source, struct xyPoint* destination, uint16_t sourceSize, xyCoord originX, xyCoord originY, xyCoord scalarX, xyCoord scalarY)
+void xyShapeMultiply(volatile struct xyPoint* source, volatile struct xyPoint* destination, uint16_t sourceSize, xyCoord originX, xyCoord originY, xyCoord scalarX, xyCoord scalarY)
 {
     for(uint16_t index = 0; index < sourceSize; ++index)
     {
@@ -248,7 +243,7 @@ void xyShapeMultiply(struct xyPoint* source, struct xyPoint* destination, uint16
     }
 }
 
-void xyShapeDivide(struct xyPoint* source, struct xyPoint* destination, uint16_t sourceSize, xyCoord originX, xyCoord originY, xyCoord divisorX, xyCoord divisorY)
+void xyShapeDivide(volatile struct xyPoint* source, volatile struct xyPoint* destination, uint16_t sourceSize, xyCoord originX, xyCoord originY, xyCoord divisorX, xyCoord divisorY)
 {
     for(uint16_t index = 0; index < sourceSize; ++index)
     {
