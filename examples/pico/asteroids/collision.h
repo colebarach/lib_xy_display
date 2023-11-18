@@ -6,9 +6,6 @@
 // Author: Cole Barach
 //
 // Description: Set of functions for calculating collisions between objects.
-//
-// To do:
-// - Need to return collision info from buffers to calculate points. Consider returning indexes.
 
 // Libraries ------------------------------------------------------------------------------------------------------------------
 

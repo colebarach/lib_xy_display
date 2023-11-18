@@ -32,6 +32,10 @@
 #define SHIP_COLLIDER_BOTTOM_LEFT_Y  0x0F      // Y offset of the bottom left corner of the ship (when viewed vertically).
 #define SHIP_COLLIDER_BOTTOM_RIGHT_X 0x00      // X offset of the bottom right corner of the ship (when viewed vertically).
 #define SHIP_COLLIDER_BOTTOM_RIGHT_Y 0x03      // Y offset of the bottom right corner of the ship (when viewed vertically).
+#define SHIP_COLLIDER_CENTER_LEFT_X  0x09      // X offset of the center left point of the ship (when viewed vertically).
+#define SHIP_COLLIDER_CENTER_LEFT_Y  0x0C      // Y offset of the center left point of the ship (when viewed vertically).
+#define SHIP_COLLIDER_CENTER_RIGHT_X 0x09      // X offset of the center left point of the ship (when viewed vertically).
+#define SHIP_COLLIDER_CENTER_RIGHT_Y 0x06      // Y offset of the center left point of the ship (when viewed vertically).
 
 // Model to render when not moving
 #define SIZE_SHIP_MODEL_IDLE 17
@@ -62,6 +66,10 @@ struct shipObject
     float colliderBottomLeftY;           // Y offset of the bottom left corner of the ship from the current position.
     float colliderBottomRightX;          // X offset of the bottom right corner of the ship from the current position.
     float colliderBottomRightY;          // Y offset of the bottom right corner of the ship from the current position.
+    float colliderCenterLeftX;           // X offset of the center left point of the ship from the current position.
+    float colliderCenterLeftY;           // Y offset of the center left point of the ship from the current position.
+    float colliderCenterRightX;          // X offset of the center right point of the ship from the current position.
+    float colliderCenterRightY;          // Y offset of the center right point of the ship from the current position.
 
     volatile struct xyShape* model;      // Shape handler of the model for the ship.
 

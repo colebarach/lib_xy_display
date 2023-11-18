@@ -67,12 +67,16 @@ void shipUpdate(ship_t* ship)
 
     ship->angularVelocity *= SHIP_ANGULAR_DRAG;
 
-    ship->colliderGunX          = (SHIP_COLLIDER_GUN_X          - SHIP_CENTER_OF_MASS_X) * cosf(ship->rotation) - (SHIP_COLLIDER_GUN_Y         - SHIP_CENTER_OF_MASS_Y) * sinf(ship->rotation) + SHIP_CENTER_OF_MASS_X;
-    ship->colliderGunY          = (SHIP_COLLIDER_GUN_X          - SHIP_CENTER_OF_MASS_X) * sinf(ship->rotation) + (SHIP_COLLIDER_GUN_Y         - SHIP_CENTER_OF_MASS_Y) * cosf(ship->rotation) + SHIP_CENTER_OF_MASS_Y;
+    ship->colliderGunX          = (SHIP_COLLIDER_GUN_X          - SHIP_CENTER_OF_MASS_X) * cosf(ship->rotation) - (SHIP_COLLIDER_GUN_Y          - SHIP_CENTER_OF_MASS_Y) * sinf(ship->rotation) + SHIP_CENTER_OF_MASS_X;
+    ship->colliderGunY          = (SHIP_COLLIDER_GUN_X          - SHIP_CENTER_OF_MASS_X) * sinf(ship->rotation) + (SHIP_COLLIDER_GUN_Y          - SHIP_CENTER_OF_MASS_Y) * cosf(ship->rotation) + SHIP_CENTER_OF_MASS_Y;
     ship->colliderBottomLeftX   = (SHIP_COLLIDER_BOTTOM_LEFT_X  - SHIP_CENTER_OF_MASS_X) * cosf(ship->rotation) - (SHIP_COLLIDER_BOTTOM_LEFT_Y  - SHIP_CENTER_OF_MASS_Y) * sinf(ship->rotation) + SHIP_CENTER_OF_MASS_X;
     ship->colliderBottomLeftY   = (SHIP_COLLIDER_BOTTOM_LEFT_X  - SHIP_CENTER_OF_MASS_X) * sinf(ship->rotation) + (SHIP_COLLIDER_BOTTOM_LEFT_Y  - SHIP_CENTER_OF_MASS_Y) * cosf(ship->rotation) + SHIP_CENTER_OF_MASS_Y;
     ship->colliderBottomRightX  = (SHIP_COLLIDER_BOTTOM_RIGHT_X - SHIP_CENTER_OF_MASS_X) * cosf(ship->rotation) - (SHIP_COLLIDER_BOTTOM_RIGHT_Y - SHIP_CENTER_OF_MASS_Y) * sinf(ship->rotation) + SHIP_CENTER_OF_MASS_X;
     ship->colliderBottomRightY  = (SHIP_COLLIDER_BOTTOM_RIGHT_X - SHIP_CENTER_OF_MASS_X) * sinf(ship->rotation) + (SHIP_COLLIDER_BOTTOM_RIGHT_Y - SHIP_CENTER_OF_MASS_Y) * cosf(ship->rotation) + SHIP_CENTER_OF_MASS_Y;
+    ship->colliderCenterLeftX   = (SHIP_COLLIDER_CENTER_LEFT_X  - SHIP_CENTER_OF_MASS_X) * cosf(ship->rotation) - (SHIP_COLLIDER_CENTER_LEFT_Y  - SHIP_CENTER_OF_MASS_Y) * sinf(ship->rotation) + SHIP_CENTER_OF_MASS_X;
+    ship->colliderCenterLeftY   = (SHIP_COLLIDER_CENTER_LEFT_X  - SHIP_CENTER_OF_MASS_X) * sinf(ship->rotation) + (SHIP_COLLIDER_CENTER_LEFT_Y  - SHIP_CENTER_OF_MASS_Y) * cosf(ship->rotation) + SHIP_CENTER_OF_MASS_Y;
+    ship->colliderCenterRightX  = (SHIP_COLLIDER_CENTER_RIGHT_X - SHIP_CENTER_OF_MASS_X) * cosf(ship->rotation) - (SHIP_COLLIDER_CENTER_RIGHT_Y - SHIP_CENTER_OF_MASS_Y) * sinf(ship->rotation) + SHIP_CENTER_OF_MASS_X;
+    ship->colliderCenterRightY  = (SHIP_COLLIDER_CENTER_RIGHT_X - SHIP_CENTER_OF_MASS_X) * sinf(ship->rotation) + (SHIP_COLLIDER_CENTER_RIGHT_Y - SHIP_CENTER_OF_MASS_Y) * cosf(ship->rotation) + SHIP_CENTER_OF_MASS_Y;
 }
 
 void shipRender(ship_t* ship)
