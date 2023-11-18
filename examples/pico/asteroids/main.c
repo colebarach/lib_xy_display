@@ -5,10 +5,9 @@
 // Description: Implementation of the videogame 'asteroids' using the X-Y rendering library.
 //
 // To do:
-// - Total number of models in buffer cannot exceed 23, why?
-// - The insert functions are getting complex, should there be a dedicated 'bulletCreate' function?
-// - Give player invincibility frames
-// - Asteroids clipping offscreen can only be hit from one side
+// - Give player invincibility frames on respawn.
+// - Object boundaries are currently hard-coded, they should be variable for different screen sizes.
+// - Asteroids of size 0 are removed, should really shift sizes down [0, 1, 2]
 
 // Libraries ------------------------------------------------------------------------------------------------------------------
 
@@ -19,41 +18,35 @@
 #include <pico/stdlib.h>
 #include <pico/rand.h>
 
-// C Standard Libraries
-#include <math.h>
-
 // Includes -------------------------------------------------------------------------------------------------------------------
 
+#include "gui.h"
+#include "input.h"
 #include "ship.h"
 #include "bullet.h"
 #include "asteroid.h"
 #include "collision.h"
 
-// Inputs ---------------------------------------------------------------------------------------------------------------------
-
-#define BUTTON_PIN_UP    16              // GPIO pin number of the up button.
-#define BUTTON_PIN_LEFT  18              // GPIO pin number of the left button.
-#define BUTTON_PIN_RIGHT 19              // GPIO pin number of the right button.
-#define BUTTON_PIN_SHOOT 17              // GPIO pin number of the down button.
-
 // Game Rules -----------------------------------------------------------------------------------------------------------------
 
-#define SIZE_BULLET_BUFFER        8      // Maximum number of bullet objects.
-#define SIZE_ASTEROID_BUFFER      12     // Maximum number of asteroid objects.
+#define SIZE_BULLET_BUFFER        12     // Maximum number of bullet objects.
+#define SIZE_ASTEROID_BUFFER      64     // Maximum number of asteroid objects.
 
 #define SHIP_DEFAULT_LIFE_COUNT   4      // Number of starting lives for the ship.
-#define ASTEROID_SPAWN_COUNT      8      // Number of asteroids to spawn in a wave.
+#define ASTEROID_SPAWN_COUNT      7      // Number of asteroids to spawn in a wave.
 
-// I/O ------------------------------------------------------------------------------------------------------------------------
+#define POINT_COUNT_ASTEROID_1    100    // Number of points earned for hitting an asteroid of size 1
+#define POINT_COUNT_ASTEROID_2    50     // Number of points earned for hitting an asteroid of size 2
+#define POINT_COUNT_ASTEROID_3    20     // Number of points earned for hitting an asteroid of size 3
 
-// Initialize Input
-// - Call to setup the inputs
-// - Required call before inputGet is called
-void inputInitialize();
+// Global Data ----------------------------------------------------------------------------------------------------------------
 
-// Get Input
-// - Call to update the movement of the player ship based on current input.
-void inputGet(struct ship_t* playerShip, struct bullet_t* bulletBuffer, uint16_t bulletBufferSize);
+ship_t         ship;                           // Ship object, controlled by player.
+scoreCounter_t score;                          // Score counter object, displays current player score.
+lifeCounter_t  lives;                          // Life counter object, displays current lives remaining.
+
+asteroid_t asteroids[SIZE_ASTEROID_BUFFER];    // Array of asteroid objects, new objects are created from this buffer.
+bullet_t   bullets[SIZE_BULLET_BUFFER];        // Array of bullet objects, new objects are created from this buffer.
 
 // Entrypoint -----------------------------------------------------------------------------------------------------------------
 
@@ -72,18 +65,16 @@ int main()
     {
         // Game Data ----------------------------------------------------------------------------------------------------------
 
-        int8_t asteroidSpeed = 1;
-        int8_t playerLives   = SHIP_DEFAULT_LIFE_COUNT;
+        int8_t   asteroidSpeed = 1;
+        int8_t   playerLives   = SHIP_DEFAULT_LIFE_COUNT;
+        uint32_t playerScore   = 0;
 
         // Objects ------------------------------------------------------------------------------------------------------------
 
-        struct ship_t ship;
         shipInitialize(&ship, xyWidth() / 2.0f - SHIP_CENTER_OF_MASS_X, xyHeight() / 2.0f - SHIP_CENTER_OF_MASS_Y);
-
-        struct bullet_t bullets[SIZE_BULLET_BUFFER];
+        scoreInitialize(&score, 0x00, 0xEC);
+        lifeInitialize(&lives,  0x9F, 0xEC);
         bulletBufferInitialize(bullets, SIZE_BULLET_BUFFER);
-
-        struct asteroid_t asteroids[SIZE_ASTEROID_BUFFER];
         asteroidBufferInitialize(asteroids, SIZE_ASTEROID_BUFFER);
 
         // Spawn initial asteroids
@@ -101,21 +92,56 @@ int main()
 
             // Update objects
             shipUpdate(&ship);
+            scoreUpdate(&score, playerScore);
+            lifeUpdate(&lives,  playerLives);
             bulletBufferUpdate(bullets, SIZE_BULLET_BUFFER);
             asteroidBufferUpdate(asteroids, SIZE_ASTEROID_BUFFER);
 
-            // Check collision
-            collideBuffersBulletAsteroid(bullets, SIZE_BULLET_BUFFER, asteroids, SIZE_ASTEROID_BUFFER);
-            bool playerHit = collideBufferShipAsteroid(&ship, asteroids, SIZE_ASTEROID_BUFFER);
-
-            // Check player lives
-            if(playerHit)
+            // Check collisions
+            int16_t bulletIndex = 0;
+            int16_t asteroidIndex = 0;
+            while(collideBuffersBulletAsteroid(bullets, SIZE_BULLET_BUFFER, asteroids, SIZE_ASTEROID_BUFFER, &bulletIndex, &asteroidIndex))
             {
+                uint32_t playerScorePrevious = playerScore;
+
+                // Update player score based on asteroid size
+                if(asteroids[asteroidIndex].size == 1)
+                {
+                    playerScore += POINT_COUNT_ASTEROID_1;
+                }
+                else if(asteroids[asteroidIndex].size == 2)
+                {
+                    playerScore += POINT_COUNT_ASTEROID_2;
+                }
+                else
+                {
+                    playerScore += POINT_COUNT_ASTEROID_3;
+                }
+
+                // If score crosses 10000 mark, add a new life
+                if(playerScore / 10000 > playerScorePrevious / 10000)
+                {
+                    ++playerLives;
+                }
+
+                // Remove offendors
+                bulletBufferRemove(bullets, SIZE_BULLET_BUFFER, bulletIndex);
+                asteroidBufferSplit(asteroids, SIZE_ASTEROID_BUFFER, asteroidIndex);
+            }
+
+            asteroidIndex = 0;
+            if(collideBufferShipAsteroid(&ship, asteroids, SIZE_ASTEROID_BUFFER, &asteroidIndex))
+            {
+                // Remove the offending asteroid
+                asteroidBufferRemove(asteroids, SIZE_ASTEROID_BUFFER, asteroidIndex);
+
+                // Remove a player life
                 --playerLives;
 
                 // Reset game if out of lives
                 if(playerLives < 0) break;
 
+                // Respawn player otherwise
                 shipRespawn(&ship);
             }
 
@@ -140,68 +166,5 @@ int main()
 
         // Clear the render stack for reset
         xyRendererClearStack();
-    }
-}
-
-// Function Definitions -------------------------------------------------------------------------------------------------------
-
-void inputInitialize()
-{
-    gpio_init(BUTTON_PIN_UP);
-    gpio_set_dir(BUTTON_PIN_UP, GPIO_IN);
-    gpio_pull_up(BUTTON_PIN_UP);
-
-    gpio_init(BUTTON_PIN_LEFT);
-    gpio_set_dir(BUTTON_PIN_LEFT, GPIO_IN);
-    gpio_pull_up(BUTTON_PIN_LEFT);
-
-    gpio_init(BUTTON_PIN_RIGHT);
-    gpio_set_dir(BUTTON_PIN_RIGHT, GPIO_IN);
-    gpio_pull_up(BUTTON_PIN_RIGHT);
-
-    gpio_init(BUTTON_PIN_SHOOT);
-    gpio_set_dir(BUTTON_PIN_SHOOT, GPIO_IN);
-    gpio_pull_up(BUTTON_PIN_SHOOT);
-}
-
-void inputGet(struct ship_t* playerShip, struct bullet_t* bulletBuffer, uint16_t bulletBufferSize)
-{
-    // Get vertical input
-    if(!gpio_get(BUTTON_PIN_UP))
-    {
-        // Move forward
-        playerShip->velocityX += SHIP_ACCELERATION_Y * cosf(playerShip->rotation);
-        playerShip->velocityY += SHIP_ACCELERATION_Y * sinf(playerShip->rotation);
-        playerShip->accelerating = true;
-    }
-    else
-    {
-        playerShip->accelerating = false;
-    }
-
-    // Get horizontal input
-    if(!gpio_get(BUTTON_PIN_LEFT))
-    {
-        // Turn left
-        playerShip->angularVelocity += SHIP_ANGULAR_ACCELERATION;
-    }
-    else if(!gpio_get(BUTTON_PIN_RIGHT))
-    {
-        // Turn right
-        playerShip->angularVelocity -= SHIP_ANGULAR_ACCELERATION;
-    }
-
-    // Get shoot input
-    if(!gpio_get(BUTTON_PIN_SHOOT))
-    {
-        if(playerShip->reloaded)
-        {
-            playerShip->reloaded = false;
-            bulletBufferSpawn(bulletBuffer, bulletBufferSize, playerShip->colliderGunX + playerShip->positionX, playerShip->colliderGunY + playerShip->positionY, playerShip->rotation, BULLET_VELOCITY);
-        }
-    }
-    else
-    {
-        playerShip->reloaded = true;
     }
 }

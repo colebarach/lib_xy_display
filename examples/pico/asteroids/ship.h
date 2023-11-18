@@ -6,11 +6,6 @@
 // Author: Cole Barach
 //
 // Description: Set of objects, variables and functions related to the ship object.
-//
-// To do:
-// - The models don't really need exposed, should they be moved to the source file?
-// - The screen size is hard-coded, how to handle this properly?
-// - The ship model, when rotated, overflows due to negative numbers. Every rectangular model that is rotated has this problem.
 
 // Libraries ------------------------------------------------------------------------------------------------------------------
 
@@ -29,14 +24,18 @@
 
 #define SIZE_SHIP_MODEL              25        // Max size of all ship models (see options below).
 
-#define SHIP_CENTER_OF_MASS_X        0x09      // X position of the center of the ship (rotation pivot).
-#define SHIP_CENTER_OF_MASS_Y        0x09      // Y position of the center of the ship (rotation pivot).
-#define SHIP_COLLIDER_GUN_X          0x12      // X position of the top of the ship (gun).
-#define SHIP_COLLIDER_GUN_Y          0x09      // Y position of the top of the ship (gun).
-#define SHIP_COLLIDER_BOTTOM_LEFT_X  0x00      // X position of the bottom left corner of the ship (when viewed vertically).
-#define SHIP_COLLIDER_BOTTOM_LEFT_Y  0x0F      // Y position of the bottom left corner of the ship (when viewed vertically).
-#define SHIP_COLLIDER_BOTTOM_RIGHT_X 0x00      // X position of the bottom right corner of the ship (when viewed vertically).
-#define SHIP_COLLIDER_BOTTOM_RIGHT_Y 0x03      // Y position of the bottom right corner of the ship (when viewed vertically).
+#define SHIP_CENTER_OF_MASS_X        0x09      // X offset of the center of the ship (rotation pivot).
+#define SHIP_CENTER_OF_MASS_Y        0x09      // Y offset of the center of the ship (rotation pivot).
+#define SHIP_COLLIDER_GUN_X          0x12      // X offset of the top of the ship (gun).
+#define SHIP_COLLIDER_GUN_Y          0x09      // Y offset of the top of the ship (gun).
+#define SHIP_COLLIDER_BOTTOM_LEFT_X  0x00      // X offset of the bottom left corner of the ship (when viewed vertically).
+#define SHIP_COLLIDER_BOTTOM_LEFT_Y  0x0F      // Y offset of the bottom left corner of the ship (when viewed vertically).
+#define SHIP_COLLIDER_BOTTOM_RIGHT_X 0x00      // X offset of the bottom right corner of the ship (when viewed vertically).
+#define SHIP_COLLIDER_BOTTOM_RIGHT_Y 0x03      // Y offset of the bottom right corner of the ship (when viewed vertically).
+#define SHIP_COLLIDER_CENTER_LEFT_X  0x09      // X offset of the center left point of the ship (when viewed vertically).
+#define SHIP_COLLIDER_CENTER_LEFT_Y  0x0C      // Y offset of the center left point of the ship (when viewed vertically).
+#define SHIP_COLLIDER_CENTER_RIGHT_X 0x09      // X offset of the center left point of the ship (when viewed vertically).
+#define SHIP_COLLIDER_CENTER_RIGHT_Y 0x06      // Y offset of the center left point of the ship (when viewed vertically).
 
 // Model to render when not moving
 #define SIZE_SHIP_MODEL_IDLE 17
@@ -50,7 +49,7 @@ extern struct xyPoint shipModelAccelerating[SIZE_SHIP_MODEL_ACCELERATING];
 
 // Ship Object
 // - Object containing all properties related to a ship.
-struct ship_t
+struct shipObject
 {
     float positionY;                     // Y position of the ship in pixels.
     float positionX;                     // X position of the ship in pixels.
@@ -67,6 +66,10 @@ struct ship_t
     float colliderBottomLeftY;           // Y offset of the bottom left corner of the ship from the current position.
     float colliderBottomRightX;          // X offset of the bottom right corner of the ship from the current position.
     float colliderBottomRightY;          // Y offset of the bottom right corner of the ship from the current position.
+    float colliderCenterLeftX;           // X offset of the center left point of the ship from the current position.
+    float colliderCenterLeftY;           // Y offset of the center left point of the ship from the current position.
+    float colliderCenterRightX;          // X offset of the center right point of the ship from the current position.
+    float colliderCenterRightY;          // Y offset of the center right point of the ship from the current position.
 
     volatile struct xyShape* model;      // Shape handler of the model for the ship.
 
@@ -74,23 +77,25 @@ struct ship_t
     struct xyPoint modelBuffer[SIZE_SHIP_MODEL];
 };
 
+typedef volatile struct shipObject ship_t;
+
 // Functions ------------------------------------------------------------------------------------------------------------------
 
 // Initialize Ship
 // - Call to initialize the ship to its default values and put the model in the render stack.
 // - Must be called before the ship will be rendered.
-void shipInitialize(struct ship_t* ship, float positionX, float positionY);
+void shipInitialize(ship_t* ship, float positionX, float positionY);
 
 // Update Ship
 // - Call to update the properties of the ship by one time step (30ms).
-void shipUpdate(struct ship_t* ship);
+void shipUpdate(ship_t* ship);
 
 // Render Ship
 // - Call to update the model of the ship based on its current state.
-void shipRender(struct ship_t* ship);
+void shipRender(ship_t* ship);
 
 // Respawn Ship
 // - Call to reset the ship to the spawn position.
-void shipRespawn(struct ship_t* ship);
+void shipRespawn(ship_t* ship);
 
 #endif // SHIP_H
