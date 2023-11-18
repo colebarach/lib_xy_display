@@ -6,6 +6,9 @@
 // Author: Cole Barach
 //
 // Description: Set of functions for calculating collisions between objects.
+//
+// To do:
+// - Need to return collision info from buffers to calculate points. Consider returning indexes.
 
 // Libraries ------------------------------------------------------------------------------------------------------------------
 
@@ -23,19 +26,28 @@
 // Ship to Asteroid Collision
 // - Check to see if the specified ship is intersecting the specified asteroid.
 // - Returns true if a collision has occured, false otherwise.
-bool collideShipAsteroid(struct ship_t* ship, struct asteroid_t* asteroid);
+bool collideShipAsteroid(ship_t* ship, asteroid_t* asteroid);
 
 // Bullet to Asteroid Collision
 // - Check to see if the specified bullet is intersecting the specified asteroid.
 // - Returns true if a collision has occured, false otherwise.
-bool collideBulletAsteroid(struct bullet_t* bullet, struct asteroid_t* asteroid);
+bool collideBulletAsteroid(bullet_t* bullet, asteroid_t* asteroid);
 
 // Buffer Functions -----------------------------------------------------------------------------------------------------------
 
-//
-bool collideBufferShipAsteroid(struct ship_t* ship, struct asteroid_t* asteroids, uint16_t asteroidBufferSize);
+// Ship to Asteroid Buffer Collision
+// - Call to check for collisions between a ship and an asteroid buffer.
+// - Starts search from the value of 'asteroidIndex'
+// - Returns true if a collision is detected and sets the value of 'asteroidIndex' to indicate the offendor.
+// - Returns false if no collision is found.
+bool collideBufferShipAsteroid(ship_t* ship, asteroid_t* asteroids, uint16_t asteroidBufferSize, int16_t* asteroidIndex);
 
-//
-void collideBuffersBulletAsteroid(struct bullet_t* bullets, uint16_t bulletBufferSize, struct asteroid_t* asteroids, uint16_t asteroidBufferSize);
+// Bullet Buffer to Asteroid Buffer Collision
+// - Call to check for collisions between objects of each buffer.
+// - Starts search from the value of 'bulletIndex' and 'asteroidIndex'.
+// - Returns true if a collision is detected and updates the values of 'bulletIndex' and 'asteroidIndex' to indicate the
+//   offending objects.
+// - Returns false if no collision is found.
+bool collideBuffersBulletAsteroid(bullet_t* bullets, uint16_t bulletBufferSize, asteroid_t* asteroids, uint16_t asteroidBufferSize, int16_t* bulletIndex, int16_t* asteroidIndex);
 
 #endif // COLLISION_H

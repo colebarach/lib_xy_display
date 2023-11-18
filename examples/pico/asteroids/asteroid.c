@@ -12,7 +12,7 @@
 
 // Asteroid Functions ---------------------------------------------------------------------------------------------------------
 
-void asteroidInitialize(struct asteroid_t* asteroid)
+void asteroidInitialize(asteroid_t* asteroid)
 {
     asteroid->active           = false;
     asteroid->size             = -1;
@@ -23,13 +23,13 @@ void asteroidInitialize(struct asteroid_t* asteroid)
     asteroid->model->visible = false;
 }
 
-void asteroidActivate(struct asteroid_t* asteroid, int8_t size, float positionX, float positionY, float velocityX, float velocityY, float rotation, float angularVelocity)
+void asteroidActivate(asteroid_t* asteroid, int8_t size, float positionX, float positionY, float velocityX, float velocityY, float rotation, float angularVelocity)
 {
     // Set default size, range [2, 3]
     if(size <= -1) size = (get_rand_32() % 2) + 2;
 
     // Map size to radius
-    float radius = (size + 1) * 4.0f;
+    float radius = size * 6.0f;
 
     asteroid->size = size;
 
@@ -58,7 +58,7 @@ void asteroidActivate(struct asteroid_t* asteroid, int8_t size, float positionX,
     asteroid->active = true;
 }
 
-void asteroidSpawn(struct asteroid_t* asteroid, int8_t size, int8_t speed, float xLowerBound, float xUpperBound, float yLowerBound, float yUpperBound)
+void asteroidSpawn(asteroid_t* asteroid, int8_t size, int8_t speed, float xLowerBound, float xUpperBound, float yLowerBound, float yUpperBound)
 {
     // Set default size, range [2, 3]
     if(size <= -1) size = (get_rand_32() % 2) + 2;
@@ -67,7 +67,7 @@ void asteroidSpawn(struct asteroid_t* asteroid, int8_t size, int8_t speed, float
     if(speed == -1) speed = 1;
 
     // Map size to radius
-    float radius = (size + 1) * 4.0f;
+    float radius = size * 6.0f;
 
     float positionX = 0.0f;
     float positionY = 0.0f;
@@ -121,10 +121,10 @@ void asteroidSpawn(struct asteroid_t* asteroid, int8_t size, int8_t speed, float
     asteroidActivate(asteroid, size, positionX, positionY, velocityX, velocityY, rotation, angularVelocity);
 }
 
-void asteroidSplit(struct asteroid_t* parent, struct asteroid_t* child1)
+void asteroidSplit(asteroid_t* parent, asteroid_t* child1)
 {
     // Block small asteroids
-    if(parent->size <= 0) return;
+    if(parent->size <= 1) return;
 
     // Calculate child 1 properties
     if(child1 != NULL)
@@ -153,13 +153,13 @@ void asteroidSplit(struct asteroid_t* parent, struct asteroid_t* child1)
     asteroidActivate(parent, parent->size - 1, child0PositionX, child0PositionY, child0VelocityX, child0VelocityY, 0.0f, child0AngularVelocity);
 }
 
-void asteroidBufferRemove(struct asteroid_t* asteroids, uint16_t bufferSize, int16_t index)
+void asteroidBufferRemove(asteroid_t* asteroids, uint16_t bufferSize, int16_t index)
 {
     asteroids[index].active = false;
     asteroids[index].model->visible = false;
 }
 
-void asteroidUpdate(struct asteroid_t* asteroid)
+void asteroidUpdate(asteroid_t* asteroid)
 {
     asteroid->positionX += asteroid->velocityX;
     asteroid->positionY += asteroid->velocityY;
@@ -174,7 +174,7 @@ void asteroidUpdate(struct asteroid_t* asteroid)
     if(asteroid->rotation >= 2*M_PI) asteroid->rotation -= 2*M_PI;
 }
 
-void asteroidRender(struct asteroid_t* asteroid)
+void asteroidRender(asteroid_t* asteroid)
 {
     // Update model position
     asteroid->model->positionX = roundf(asteroid->positionX);
@@ -185,7 +185,7 @@ void asteroidRender(struct asteroid_t* asteroid)
     asteroid->model->pointCount = asteroid->modelPointCount;
 }
 
-void asteroidModelGenerate(struct xyPoint* model, uint16_t modelSize, float radius)
+void asteroidModelGenerate(volatile struct xyPoint* model, uint16_t modelSize, float radius)
 {
     // Generate circle with random radius
     for(uint16_t index = 0; index < modelSize - 1; ++index)
@@ -202,7 +202,7 @@ void asteroidModelGenerate(struct xyPoint* model, uint16_t modelSize, float radi
     model[modelSize - 1].y = model[0].y;
 }
 
-void asteroidBufferInitialize(struct asteroid_t* asteroids, uint16_t bufferSize)
+void asteroidBufferInitialize(asteroid_t* asteroids, uint16_t bufferSize)
 {
     for(uint16_t index = 0; index < bufferSize; ++index)
     {
@@ -210,7 +210,7 @@ void asteroidBufferInitialize(struct asteroid_t* asteroids, uint16_t bufferSize)
     }
 }
 
-int16_t asteroidBufferSpawn(struct asteroid_t* asteroids, uint16_t bufferSize, int8_t size, int8_t speed, float xLowerBound, float xUpperBound, float yLowerBound, float yUpperBound)
+int16_t asteroidBufferSpawn(asteroid_t* asteroids, uint16_t bufferSize, int8_t size, int8_t speed, float xLowerBound, float xUpperBound, float yLowerBound, float yUpperBound)
 {
     for(uint16_t index = 0; index < bufferSize; ++index)
     {
@@ -224,10 +224,10 @@ int16_t asteroidBufferSpawn(struct asteroid_t* asteroids, uint16_t bufferSize, i
     return -1;
 }
 
-int16_t asteroidBufferSplit(struct asteroid_t* asteroids, uint16_t bufferSize, int16_t parentIndex)
+int16_t asteroidBufferSplit(asteroid_t* asteroids, uint16_t bufferSize, int16_t parentIndex)
 {
     // Check asteroid size
-    if(asteroids[parentIndex].size <= 0)
+    if(asteroids[parentIndex].size <= 1)
     {
         // Destroy small asteroids
         asteroidBufferRemove(asteroids, bufferSize, parentIndex);
@@ -252,7 +252,7 @@ int16_t asteroidBufferSplit(struct asteroid_t* asteroids, uint16_t bufferSize, i
     }
 }
 
-void asteroidBufferUpdate(struct asteroid_t* asteroids, uint16_t bufferSize)
+void asteroidBufferUpdate(asteroid_t* asteroids, uint16_t bufferSize)
 {
     for(uint16_t index = 0; index < bufferSize; ++index)
     {
@@ -263,7 +263,7 @@ void asteroidBufferUpdate(struct asteroid_t* asteroids, uint16_t bufferSize)
     }
 }
 
-void asteroidBufferRender(struct asteroid_t* asteroids, uint16_t bufferSize)
+void asteroidBufferRender(asteroid_t* asteroids, uint16_t bufferSize)
 {
     for(uint16_t index = 0; index < bufferSize; ++index)
     {
@@ -274,7 +274,7 @@ void asteroidBufferRender(struct asteroid_t* asteroids, uint16_t bufferSize)
     }
 }
 
-uint16_t asteroidBufferCountActive(struct asteroid_t* asteroids, uint16_t bufferSize)
+uint16_t asteroidBufferCountActive(asteroid_t* asteroids, uint16_t bufferSize)
 {
     uint16_t activeCount = 0;
 

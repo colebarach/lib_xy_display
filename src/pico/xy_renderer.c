@@ -27,6 +27,8 @@ volatile uint16_t       stackTop = 0;                          // Index of the t
 uint16_t                stackShapeIndex = 0;                   // Index of the current shape being rendered (index in stack)
 uint16_t                stackPointIndex = 0;                   // Index of the current point being rendered (index in shape)
 
+volatile bool           rendererActive = false;                // Indicates whether or not to run the renderer.
+
 // Function Prototypes --------------------------------------------------------------------------------------------------------
 
 // Renderer Interrupt
@@ -119,8 +121,20 @@ void xyRendererInitialize()
 {
     xyCursorInitialize();
 
+    // Set flag
+    rendererActive = true;
+
     // Start core 1
     multicore_launch_core1(rendererEntrypoint);
+}
+
+void xyRendererStop()
+{
+    // Reset cursor
+    xyCursorSet(0, 0);
+
+    // Set flag to stop core 1
+    rendererActive = false;
 }
 
 void rendererInterrupt()
@@ -152,7 +166,7 @@ void rendererInterrupt()
 
 void rendererEntrypoint()
 {
-    while(true)
+    while(rendererActive)
     {
         // TODO: Need a timer here, not just a function call.
         // - Spec appropriate one, set at start, blocking call at end

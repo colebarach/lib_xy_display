@@ -19,7 +19,7 @@ struct xyPoint bulletModel[SIZE_BULLET_MODEL] =
 
 // Bullet Functions -----------------------------------------------------------------------------------------------------------
 
-void bulletInitialize(struct bullet_t* bullet)
+void bulletInitialize(bullet_t* bullet)
 {
     bullet->active          = false;
     bullet->positionX       = 0.0f;
@@ -33,7 +33,7 @@ void bulletInitialize(struct bullet_t* bullet)
     bullet->model->visible = false;
 }
 
-void bulletSpawn(struct bullet_t* bullet, float positionX, float positionY, float rotation, float velocity)
+void bulletSpawn(bullet_t* bullet, float positionX, float positionY, float rotation, float velocity)
 {
     // Calculate tail (to offset position)
     float bulletTailX = -(BULLET_SIZE_X / 2.0f - BULLET_CENTER_OF_MASS_X) * cosf(rotation) + BULLET_CENTER_OF_MASS_X;
@@ -62,7 +62,7 @@ void bulletSpawn(struct bullet_t* bullet, float positionX, float positionY, floa
     bullet->active = true;
 }
 
-void bulletUpdate(struct bullet_t* bullet)
+void bulletUpdate(bullet_t* bullet)
 {
     bullet->positionX += bullet->velocityX;
     bullet->positionY += bullet->velocityY;
@@ -74,7 +74,7 @@ void bulletUpdate(struct bullet_t* bullet)
     }
 }
 
-void bulletRender(struct bullet_t* bullet)
+void bulletRender(bullet_t* bullet)
 {
     // Update model position
     bullet->model->positionX = roundf(bullet->positionX);
@@ -83,7 +83,7 @@ void bulletRender(struct bullet_t* bullet)
 
 // Bullet Buffer Functions ----------------------------------------------------------------------------------------------------
 
-void bulletBufferInitialize(struct bullet_t* bullets, uint16_t bufferSize)
+void bulletBufferInitialize(bullet_t* bullets, uint16_t bufferSize)
 {
     for(uint16_t index = 0; index < bufferSize; ++index)
     {
@@ -91,7 +91,7 @@ void bulletBufferInitialize(struct bullet_t* bullets, uint16_t bufferSize)
     }
 }
 
-int16_t bulletBufferSpawn(struct bullet_t* bullets, uint16_t bufferSize, float positionX, float positionY, float rotation, float velocity)
+int16_t bulletBufferSpawn(bullet_t* bullets, uint16_t bufferSize, float positionX, float positionY, float rotation, float velocity)
 {
     for(uint16_t index = 0; index < bufferSize; ++index)
     {
@@ -105,13 +105,13 @@ int16_t bulletBufferSpawn(struct bullet_t* bullets, uint16_t bufferSize, float p
     return -1;
 }
 
-void bulletBufferRemove(struct bullet_t* bullets, uint16_t bufferSize, uint16_t index)
+void bulletBufferRemove(bullet_t* bullets, uint16_t bufferSize, uint16_t index)
 {
     bullets[index].active = false;
     bullets[index].model->visible = false;
 }
 
-void bulletBufferUpdate(struct bullet_t* bullets, uint16_t bufferSize)
+void bulletBufferUpdate(bullet_t* bullets, uint16_t bufferSize)
 {
     for(uint16_t index = 0; index < bufferSize; ++index)
     {
@@ -122,7 +122,7 @@ void bulletBufferUpdate(struct bullet_t* bullets, uint16_t bufferSize)
     }
 }
 
-void bulletBufferRender(struct bullet_t* bullets, uint16_t bufferSize)
+void bulletBufferRender(bullet_t* bullets, uint16_t bufferSize)
 {
     for(uint16_t index = 0; index < bufferSize; ++index)
     {

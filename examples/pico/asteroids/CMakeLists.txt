@@ -1,5 +1,7 @@
 add_executable(asteroids
     main.c
+    gui.c
+    input.c
     ship.c
     bullet.c
     asteroid.c

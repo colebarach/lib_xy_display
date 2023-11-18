@@ -13,13 +13,11 @@
 // Naming: This library reserves the 'xy' prefix, see the below prototypes for specifics.
 // 
 // To do:
-// - Render stack seems to overflow at 23 items, not sure why.
 // - String objects would be nice, need an internal stack for that
 // - Render period is only approximate right now, specific timing may help with inconsistent appearances
 // - How should the null shape be handled? It may need changed for strings. (Consider screen burn-in)
 // - Reimplement string, overhaul methods
 // - Does xy hardware need included here, it defines a lot of functions not used by the end user
-// - Consider implementing rotations into the render loop, would save a lot of time copying and translating into buffers.
 // - Hiding a shape still consumes a cycle, this can cause burn-in. How to fix this without recursion?
 
 // Includes -------------------------------------------------------------------------------------------------------------------
@@ -66,10 +64,14 @@ void xyRendererClearStack();
 
 // Renderer -------------------------------------------------------------------------------------------------------------------
 
-// Initialize
-// - Call to initialize the renderer
-// - Must be called before any other function is used
+// Initialize Renderer
+// - Call to initialize the renderer.
+// - Must be called before any other function is used.
 void xyRendererInitialize();
+
+// Stop Renderer
+// - Call to disable the renderer.
+void xyRendererStop();
 
 // Shapes ---------------------------------------------------------------------------------------------------------------------
 
