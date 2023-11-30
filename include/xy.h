@@ -19,7 +19,6 @@
 // Includes -------------------------------------------------------------------------------------------------------------------
 
 #include "xy_hardware.h"
-#include "xy_drawing.h"
 #include "xy_renderer.h"
 #include "xy_shapes.h"
 #include "xy_math.h"

@@ -31,11 +31,11 @@ struct xyPoint
 
 // Functions ------------------------------------------------------------------------------------------------------------------
 
-// XY Cursor Set
+// X-Y Cursor Set
 // - Call to set the position of the cursor
 void xyCursorSet(xyCoord x, xyCoord y);
 
-// XY Delay
+// X-Y Delay
 void xyDelay();
 
 // XY Cursor Initialize

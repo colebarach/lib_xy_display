@@ -28,8 +28,9 @@
 
 void xyCursorSet(xyCoord x, xyCoord y)
 {
-    // TODO: Is a bitmask needed to protect other outputs?
-    XY_CURSOR = (XY_CURSOR_X(x) | XY_CURSOR_Y(y));
+    // TODO: Register vs dedicated function
+    gpio_put_masked(0xFF, (XY_CURSOR_X(x) | XY_CURSOR_Y(y)));
+    // XY_CURSOR = (XY_CURSOR_X(x) | XY_CURSOR_Y(y));
 }
 
 void xyDelay()
