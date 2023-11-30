@@ -29,7 +29,7 @@
 void xyCursorSet(xyCoord x, xyCoord y)
 {
     // TODO: Register vs dedicated function
-    gpio_put_masked(0xFF, (XY_CURSOR_X(x) | XY_CURSOR_Y(y)));
+    gpio_put_masked(0xFFFF, (XY_CURSOR_X(x) | XY_CURSOR_Y(y)));
     // XY_CURSOR = (XY_CURSOR_X(x) | XY_CURSOR_Y(y));
 }
 
