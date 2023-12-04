@@ -22,12 +22,12 @@
 
 // Global Memory --------------------------------------------------------------------------------------------------------------
 
-volatile struct xyShape renderStack[RENDER_STACK_SIZE];        // Stack of shapes to be rendered
-volatile uint16_t       stackTop = 0;                          // Index of the top of the stack (next empty index)
-uint16_t                stackShapeIndex = 0;                   // Index of the current shape being rendered (index in stack)
-uint16_t                stackPointIndex = 0;                   // Index of the current point being rendered (index in shape)
+volatile xyShape_t renderStack[RENDER_STACK_SIZE];             // Stack of shapes to be rendered
+volatile uint16_t  stackTop        = 0;                        // Index of the top of the stack (next empty index)
+volatile bool      rendererActive = false;                     // Indicates whether or not to run the renderer.
 
-volatile bool           rendererActive = false;                // Indicates whether or not to run the renderer.
+uint16_t           stackShapeIndex = 0;                        // Index of the current shape being rendered (index in stack)
+uint16_t           stackPointIndex = 0;                        // Index of the current point being rendered (index in shape)
 
 // Function Prototypes --------------------------------------------------------------------------------------------------------
 
@@ -43,7 +43,7 @@ void rendererEntrypoint();
 
 // Function Definitions -------------------------------------------------------------------------------------------------------
 
-volatile struct xyShape* xyRendererRenderShape(volatile struct xyPoint* points, uint16_t pointCount, xyCoord positionX, xyCoord positionY)
+volatile xyShape_t* xyRendererRenderShape(volatile xyPoint_t* points, uint16_t pointCount, xyCoord_t positionX, xyCoord_t positionY)
 {
     // Check for full stack
     if(stackTop >= RENDER_STACK_SIZE) return NULL;
@@ -60,7 +60,7 @@ volatile struct xyShape* xyRendererRenderShape(volatile struct xyPoint* points, 
     return &(renderStack[stackTop - 1]);
 }
 
-volatile struct xyShape* xyRendererRenderChar(char data, xyCoord xPosition, xyCoord yPosition)
+volatile xyShape_t* xyRendererRenderChar(char data, xyCoord_t xPosition, xyCoord_t yPosition)
 {
     // Fetch the character shape from the ASCII table, render, and return the reference
     return xyRendererRenderShape(xyShape16x16Ascii[data], xyShapeSize16x16Ascii[data], xPosition, yPosition);
@@ -117,9 +117,10 @@ void xyRendererClearStack()
     stackTop = 0;
 }
 
-void xyRendererInitialize()
+void xyRendererInitialize(uint16_t xBitOffset, uint16_t xBitLength, uint16_t yBitOffset, uint16_t yBitLength, xyCoord_t xWidth, xyCoord_t yHeight)
 {
-    xyCursorInitialize();
+    // Initialize lower level library
+    xyInitialize(xBitOffset, xBitLength, yBitOffset, yBitLength, xWidth, yHeight);
 
     // Set flag
     rendererActive = true;
@@ -171,20 +172,11 @@ void rendererEntrypoint()
         // TODO: Need a timer here, not just a function call.
         // - Spec appropriate one, set at start, blocking call at end
         rendererInterrupt();
-        xyDelay();
+        // xyDelay(); // TODO: TIMERS
     }
 }
 
-struct xyPoint* xyShapeAllocate(uint16_t size)
-{
-    // Allocate memory for points
-    struct xyPoint* destination = malloc(sizeof(struct xyPoint) * size);
-
-    // Return shape
-    return destination;
-}
-
-void xyShapeCopy(volatile struct xyPoint* source, volatile struct xyPoint* destination, uint16_t sourceSize, xyCoord originX, xyCoord originY)
+void xyShapeCopy(volatile xyPoint_t* source, volatile xyPoint_t* destination, uint16_t sourceSize, xyCoord_t originX, xyCoord_t originY)
 {
     // Copy point values from source
     for(uint16_t index = 0; index < sourceSize; ++index)
@@ -194,7 +186,7 @@ void xyShapeCopy(volatile struct xyPoint* source, volatile struct xyPoint* desti
     }
 }
 
-void xyShapeAppend(volatile struct xyPoint* source, volatile struct xyPoint* destination, uint16_t sourceSize, uint16_t destinationIndex, xyCoord originX, xyCoord originY)
+void xyShapeAppend(volatile xyPoint_t* source, volatile xyPoint_t* destination, uint16_t sourceSize, uint16_t destinationIndex, xyCoord_t originX, xyCoord_t originY)
 {
     // Copy point values from source starting from destination index
     for(uint16_t index = 0; index < sourceSize; ++index)
@@ -204,53 +196,89 @@ void xyShapeAppend(volatile struct xyPoint* source, volatile struct xyPoint* des
     }
 }
 
-void xyShapeRotate(volatile struct xyPoint* source, volatile struct xyPoint* destination, uint16_t sourceSize, xyCoord originX, xyCoord originY, uint8_t theta)
+void xyShapeTranslate(volatile xyPoint_t* source, volatile xyPoint_t* destination, uint16_t sourceSize, xyCoord_t originX, xyCoord_t originY, xyCoord_t offsetX, xyCoord_t offsetY, float scalarX, float scalarY, float theta)
 {
     for(uint16_t index = 0; index < sourceSize; ++index)
     {
-        xyCoordLong x = (xyCoordLong)source[index].x - originX;
-        xyCoordLong y = (xyCoordLong)source[index].y - originY;
+        // Offset
+        xyCoordLong_t x = (xyCoordLong_t)source[index].x + offsetX - originX;
+        xyCoordLong_t y = (xyCoordLong_t)source[index].y + offsetY - originY;
 
-        xyCoordLong xPrime = round((x * cos256x256Signed[theta] - y * sin256x256Signed[theta]) / 127.0f);
-        xyCoordLong yPrime = round((x * sin256x256Signed[theta] + y * cos256x256Signed[theta]) / 127.0f);
+        // Scale
+        x *= scalarX;
+        y *= scalarY;
 
-        destination[index].x = (xyCoord)(xPrime + originX);
-        destination[index].y = (xyCoord)(yPrime + originY);
+        // Rotation
+        xyCoordLong_t xPrime = round(x * cosf(theta) - y * sinf(theta));
+        xyCoordLong_t yPrime = round(x * sinf(theta) + y * cosf(theta));
+
+        destination[index].x = (xyCoord_t)(xPrime + originX);
+        destination[index].y = (xyCoord_t)(yPrime + originY);
     }
 }
 
-void xyShapeScale(volatile struct xyPoint* source, volatile struct xyPoint* destination, uint16_t sourceSize, xyCoord originX, xyCoord originY, float scalarX, float scalarY)
+void xyShapeRotate(volatile xyPoint_t* source, volatile xyPoint_t* destination, uint16_t sourceSize, xyCoord_t originX, xyCoord_t originY, float theta)
 {
     for(uint16_t index = 0; index < sourceSize; ++index)
     {
-        xyCoordLong x = (xyCoordLong)source[index].x - originX;
-        xyCoordLong y = (xyCoordLong)source[index].y - originY;
+        xyCoordLong_t x = (xyCoordLong_t)source[index].x - originX;
+        xyCoordLong_t y = (xyCoordLong_t)source[index].y - originY;
 
-        destination[index].x = round((xyCoord)(x * scalarX + originX));
-        destination[index].y = round((xyCoord)(y * scalarY + originY));
+        xyCoordLong_t xPrime = round(x * cosf(theta) - y * sinf(theta));
+        xyCoordLong_t yPrime = round(x * sinf(theta) + y * cosf(theta));
+
+        destination[index].x = (xyCoord_t)(xPrime + originX);
+        destination[index].y = (xyCoord_t)(yPrime + originY);
     }
 }
 
-void xyShapeMultiply(volatile struct xyPoint* source, volatile struct xyPoint* destination, uint16_t sourceSize, xyCoord originX, xyCoord originY, xyCoord scalarX, xyCoord scalarY)
+void xyShapeRotateInt(volatile xyPoint_t* source, volatile xyPoint_t* destination, uint16_t sourceSize, xyCoord_t originX, xyCoord_t originY, uint8_t theta)
 {
     for(uint16_t index = 0; index < sourceSize; ++index)
     {
-        xyCoordLong x = (xyCoordLong)source[index].x - originX;
-        xyCoordLong y = (xyCoordLong)source[index].y - originY;
+        xyCoordLong_t x = (xyCoordLong_t)source[index].x - originX;
+        xyCoordLong_t y = (xyCoordLong_t)source[index].y - originY;
 
-        destination[index].x = (xyCoord)(x * scalarX + originX);
-        destination[index].y = (xyCoord)(y * scalarY + originY);
+        xyCoordLong_t xPrime = round((x * cos256x256Signed[theta] - y * sin256x256Signed[theta]) / 127.0f);
+        xyCoordLong_t yPrime = round((x * sin256x256Signed[theta] + y * cos256x256Signed[theta]) / 127.0f);
+
+        destination[index].x = (xyCoord_t)(xPrime + originX);
+        destination[index].y = (xyCoord_t)(yPrime + originY);
     }
 }
 
-void xyShapeDivide(volatile struct xyPoint* source, volatile struct xyPoint* destination, uint16_t sourceSize, xyCoord originX, xyCoord originY, xyCoord divisorX, xyCoord divisorY)
+void xyShapeScale(volatile xyPoint_t* source, volatile xyPoint_t* destination, uint16_t sourceSize, xyCoord_t originX, xyCoord_t originY, float scalarX, float scalarY)
 {
     for(uint16_t index = 0; index < sourceSize; ++index)
     {
-        xyCoordLong x = (xyCoordLong)source[index].x - originX;
-        xyCoordLong y = (xyCoordLong)source[index].y - originY;
+        xyCoordLong_t x = (xyCoordLong_t)source[index].x - originX;
+        xyCoordLong_t y = (xyCoordLong_t)source[index].y - originY;
 
-        destination[index].x = (xyCoord)(x / divisorX + originX);
-        destination[index].y = (xyCoord)(y / divisorY + originY);
+        destination[index].x = round((xyCoord_t)(x * scalarX + originX));
+        destination[index].y = round((xyCoord_t)(y * scalarY + originY));
+    }
+}
+
+void xyShapeMultiply(volatile xyPoint_t* source, volatile xyPoint_t* destination, uint16_t sourceSize, xyCoord_t originX, xyCoord_t originY, xyCoord_t scalarX, xyCoord_t scalarY)
+{
+    for(uint16_t index = 0; index < sourceSize; ++index)
+    {
+        xyCoordLong_t x = (xyCoordLong_t)source[index].x - originX;
+        xyCoordLong_t y = (xyCoordLong_t)source[index].y - originY;
+
+        destination[index].x = (xyCoord_t)(x * scalarX + originX);
+        destination[index].y = (xyCoord_t)(y * scalarY + originY);
+    }
+}
+
+void xyShapeDivide(volatile xyPoint_t* source, volatile xyPoint_t* destination, uint16_t sourceSize, xyCoord_t originX, xyCoord_t originY, xyCoord_t divisorX, xyCoord_t divisorY)
+{
+    for(uint16_t index = 0; index < sourceSize; ++index)
+    {
+        xyCoordLong_t x = (xyCoordLong_t)source[index].x - originX;
+        xyCoordLong_t y = (xyCoordLong_t)source[index].y - originY;
+
+        destination[index].x = (xyCoord_t)(x / divisorX + originX);
+        destination[index].y = (xyCoord_t)(y / divisorY + originY);
     }
 }

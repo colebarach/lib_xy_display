@@ -10,6 +10,5 @@ pico_sdk_init()
 
 include_directories(../../include)
 
-add_subdirectory(rendering_demos)
-add_subdirectory(pong)
-add_subdirectory(asteroids)
+add_subdirectory(ascii_table)
+add_subdirectory(translation)

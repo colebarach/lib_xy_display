@@ -6,85 +6,64 @@
 // Raspberry Pi Pico
 #include <pico/stdlib.h>
 
-// Macros ---------------------------------------------------------------------------------------------------------------------
+// Global Data ----------------------------------------------------------------------------------------------------------------
 
-// XY Cursor
-// - Parallel output register of the X & Y signals
-#define XY_CURSOR sio_hw->gpio_out
+volatile uint16_t xBitOffset;
+volatile uint16_t yBitOffset;
+volatile uint32_t xBitmask;
+volatile uint32_t yBitmask;
 
-// Cursor X
-// - Maps an unsigned integer X to the cursor bitfield
-#define XY_CURSOR_X(x) (x & 0xFF)
-
-// Cursor Y
-// - Maps an unsigned integer Y to the cursor bitfield
-#define XY_CURSOR_Y(y) ((y & 0xFF) << 8)
-
-// Update Delay
-// - Function to block execution for 1 update period
-#define XY_DELAY_UPDATE() sleep_us(1);
+volatile xyCoord_t xWidth;
+volatile xyCoord_t yHeight;
 
 // Functions ------------------------------------------------------------------------------------------------------------------
 
-void xyCursorSet(xyCoord x, xyCoord y)
+void xyInitialize(uint16_t xBitOffset_, uint16_t xBitLength, uint16_t yBitOffset_, uint16_t yBitLength, xyCoord_t xWidth_, xyCoord_t yHeight_)
 {
-    // TODO: Register vs dedicated function
-    gpio_put_masked(0xFFFF, (XY_CURSOR_X(x) | XY_CURSOR_Y(y)));
-    // XY_CURSOR = (XY_CURSOR_X(x) | XY_CURSOR_Y(y));
+    // Store output information
+    xBitOffset = xBitOffset_;
+    yBitOffset = yBitOffset_;
+    xBitmask = 0;
+    yBitmask = 0;
+
+    xWidth  = xWidth_;
+    yHeight = yHeight_;
+
+    // Configure X parallel output
+    for(uint16_t index = xBitOffset; index < xBitOffset + xBitLength; ++index)
+    {
+        xBitmask |= (0b1 << index);
+        gpio_init(index);
+        gpio_set_dir(index, GPIO_OUT);
+    }
+
+    // Configure Y parallel output
+    for(uint16_t index = yBitOffset; index < yBitOffset + yBitLength; ++index)
+    {
+        yBitmask |= (0b1 << index);
+        gpio_init(index);
+        gpio_set_dir(index, GPIO_OUT);
+    }
 }
 
-void xyDelay()
+void xyCursorSet(xyCoord_t x, xyCoord_t y)
 {
-    XY_DELAY_UPDATE();
+    // Clamp cursor
+    if(x >= xWidth)  x = xWidth  - 1;
+    if(y >= yHeight) y = yHeight - 1;
+
+    // Update output
+    uint32_t outputValue = ((uint32_t)x << xBitOffset) & xBitmask | ((uint32_t)y << yBitOffset) & yBitmask;
+    uint32_t outputMask = xBitmask | yBitmask;
+    gpio_put_masked(outputMask, outputValue);
 }
 
-void xyCursorInitialize()
+xyCoord_t xyWidth()
 {
-    // X
-    gpio_init(0);
-    gpio_init(1);
-    gpio_init(2);
-    gpio_init(3);
-    gpio_init(4);
-    gpio_init(5);
-    gpio_init(6);
-    gpio_init(7);
-    
-    gpio_set_dir(0, GPIO_OUT);
-    gpio_set_dir(1, GPIO_OUT);
-    gpio_set_dir(2, GPIO_OUT);
-    gpio_set_dir(3, GPIO_OUT);
-    gpio_set_dir(4, GPIO_OUT);
-    gpio_set_dir(5, GPIO_OUT);
-    gpio_set_dir(6, GPIO_OUT);
-    gpio_set_dir(7, GPIO_OUT);
-
-    // Y
-    gpio_init(8);
-    gpio_init(9);
-    gpio_init(10);
-    gpio_init(11);
-    gpio_init(12);
-    gpio_init(13);
-    gpio_init(14);
-    gpio_init(15);
-
-    gpio_set_dir(8, GPIO_OUT);
-    gpio_set_dir(9, GPIO_OUT);
-    gpio_set_dir(10, GPIO_OUT);
-    gpio_set_dir(11, GPIO_OUT);
-    gpio_set_dir(12, GPIO_OUT);
-    gpio_set_dir(13, GPIO_OUT);
-    gpio_set_dir(14, GPIO_OUT);
-    gpio_set_dir(15, GPIO_OUT);
+    return xWidth;
 }
 
-xyCoord xyWidth()
+xyCoord_t xyHeight()
 {
-    return 0x100;
-}
-
-xyCoord xyHeight()
-{
-    return 0x100;
+    return yHeight;
 }
