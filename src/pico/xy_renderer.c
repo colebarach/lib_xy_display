@@ -6,6 +6,10 @@
 #include "xy_math.h"
 #include "xy_shapes.h"
 
+// Compilation Flags ----------------------------------------------------------------------------------------------------------
+
+// #define DEBUG_MODE
+
 // Libraries ------------------------------------------------------------------------------------------------------------------
 
 // Pico Libraries
@@ -16,6 +20,11 @@
 #include <stdlib.h>
 #include <math.h>
 
+// Debugging Libraries
+#ifdef DEBUG_MODE
+#include <stdio.h>
+#endif // DEBUG_MODE
+
 // Constants ------------------------------------------------------------------------------------------------------------------
 
 #define RENDER_STACK_SIZE 256            // Maximum number of shapes being rendered in a single frame, may be modified.
@@ -23,8 +32,9 @@
 // Global Memory --------------------------------------------------------------------------------------------------------------
 
 volatile xyShape_t renderStack[RENDER_STACK_SIZE];             // Stack of shapes to be rendered
+
 volatile uint16_t  stackTop        = 0;                        // Index of the top of the stack (next empty index)
-volatile bool      rendererActive = false;                     // Indicates whether or not to run the renderer.
+volatile bool      rendererActive  = false;                    // Indicates whether or not to run the renderer.
 
 uint16_t           stackShapeIndex = 0;                        // Index of the current shape being rendered (index in stack)
 uint16_t           stackPointIndex = 0;                        // Index of the current point being rendered (index in shape)
@@ -32,18 +42,18 @@ uint16_t           stackPointIndex = 0;                        // Index of the c
 // Function Prototypes --------------------------------------------------------------------------------------------------------
 
 // Renderer Interrupt
-// - Call to render the next point in the stack
+// - Call to render the next point in the stack.
 void rendererInterrupt();
 
 // Renderer Entrypoint
-// - Infinite loop for rendering, calls rendererInterrupt() periodically
-// - Entrypoint for Pico core #1
-// - Does not return
+// - Infinite loop for rendering, calls rendererInterrupt() periodically.
+// - Entrypoint for Pico core #1.
+// - Does not return.
 void rendererEntrypoint();
 
 // Function Definitions -------------------------------------------------------------------------------------------------------
 
-volatile xyShape_t* xyRendererRenderShape(volatile xyPoint_t* points, uint16_t pointCount, xyCoord_t positionX, xyCoord_t positionY)
+volatile xyShape_t* xyRenderShape(volatile xyPoint_t* points, uint16_t pointCount, xyCoord_t positionX, xyCoord_t positionY, bool visible)
 {
     // Check for full stack
     if(stackTop >= RENDER_STACK_SIZE) return NULL;
@@ -53,17 +63,64 @@ volatile xyShape_t* xyRendererRenderShape(volatile xyPoint_t* points, uint16_t p
     renderStack[stackTop].pointCount = pointCount;
     renderStack[stackTop].positionX  = positionX;
     renderStack[stackTop].positionY  = positionY;
-    renderStack[stackTop].visible    = true;
+    renderStack[stackTop].colorRed   = 255;
+    renderStack[stackTop].colorGreen = 255;
+    renderStack[stackTop].colorBlue  = 255;
+    renderStack[stackTop].visible    = visible;
+    renderStack[stackTop].delayUs    = 0;
     ++stackTop;
 
     // Return a reference to the new shape
     return &(renderStack[stackTop - 1]);
 }
 
-volatile xyShape_t* xyRendererRenderChar(char data, xyCoord_t xPosition, xyCoord_t yPosition)
+volatile xyShape_t* xyRenderChar(char data, xyCoord_t xPosition, xyCoord_t yPosition)
 {
     // Fetch the character shape from the ASCII table, render, and return the reference
-    return xyRendererRenderShape(xyShape16x16Ascii[data], xyShapeSize16x16Ascii[data], xPosition, yPosition);
+    return xyRenderShape(xyShape16x16Ascii[data], xyShapeSize16x16Ascii[data], xPosition, yPosition, true);
+}
+
+xyString_t xyRenderString(char* data, xyCoord_t lowerBoundX, xyCoord_t lowerBoundY, xyCoord_t upperBoundX, xyCoord_t upperBoundY)
+{
+    xyString_t string =
+    {
+        .characters     = NULL,
+        .characterCount = 0
+    };
+
+    xyCoord_t positionX = lowerBoundX;
+    xyCoord_t positionY = upperBoundY - 0x10;
+
+    bool start = true;
+    while(*data != '\0')
+    {
+        if(positionX + 0x0C >= upperBoundX)
+        {
+            if(positionY - 0x14 < lowerBoundY) break;
+
+            positionX = lowerBoundX;
+            positionY -= 0x14;
+        }
+
+        if(start)
+        {
+            string.characters = xyRenderChar(*data, positionX, positionY);
+            if(string.characters == NULL) break;
+            start = false;
+        }
+        else
+        {
+            if(xyRenderChar(*data, positionX, positionY) == NULL)
+            {
+                break;
+            }
+        }
+
+        positionX += 0x10;
+        ++data;
+    }
+
+    return string;
 }
 
 // int16_t xyRendererRenderString(const char* data, uint16_t xPosition, uint16_t yPosition)
@@ -112,15 +169,15 @@ volatile xyShape_t* xyRendererRenderChar(char data, xyCoord_t xPosition, xyCoord
 //     return 0;
 // }
 
-void xyRendererClearStack()
+void xyRendererClear()
 {
     stackTop = 0;
 }
 
-void xyRendererInitialize(uint16_t xBitOffset, uint16_t xBitLength, uint16_t yBitOffset, uint16_t yBitLength, xyCoord_t xWidth, xyCoord_t yHeight)
+void xyRendererStart()
 {
-    // Initialize lower level library
-    xyInitialize(xBitOffset, xBitLength, yBitOffset, yBitLength, xWidth, yHeight);
+    // Ignore repeated calls
+    if(rendererActive) return;
 
     // Set flag
     rendererActive = true;
@@ -132,7 +189,8 @@ void xyRendererInitialize(uint16_t xBitOffset, uint16_t xBitLength, uint16_t yBi
 void xyRendererStop()
 {
     // Reset cursor
-    xyCursorSet(0, 0);
+    xyCursorMove(0, 0);
+    xyCursorColor(0, 0, 0);
 
     // Set flag to stop core 1
     rendererActive = false;
@@ -140,39 +198,96 @@ void xyRendererStop()
 
 void rendererInterrupt()
 {
+    #ifdef DEBUG_MODE
+    printf("Renderer ISR: Shape Index: %i, Point Index: %i  =>  ", stackShapeIndex, stackPointIndex);
+    #endif // DEBUG_MODE
+
     // Check for empty stack
     if(stackTop == 0) return;
 
-    // Keep point index within shape
+    bool shapeValid = renderStack[stackShapeIndex].pointCount != 0 && renderStack[stackShapeIndex].points != NULL & renderStack[stackShapeIndex].visible;
+
+    if(stackPointIndex == 0)
+    {
+        #ifdef DEBUG_MODE
+        printf("Delay %i us  =>  ", renderStack[stackShapeIndex].delayUs);
+        #endif // DEBUG_MODE
+
+        // Delay to reach start of shape
+        sleep_us(renderStack[stackShapeIndex].delayUs);
+    }
+
+    // Start drawing at start of shape
+    if(stackPointIndex == 0 && shapeValid)
+    {
+        #ifdef DEBUG_MODE
+        printf("Beam on  =>  ");
+        #endif // DEBUG_MODE
+
+        // Set shape color
+        xyCursorColor(renderStack[stackShapeIndex].colorRed, renderStack[stackShapeIndex].colorGreen, renderStack[stackShapeIndex].colorBlue);
+    }
+
+    // Stop drawing at end of shape
+    if(stackPointIndex >= renderStack[stackShapeIndex].pointCount - 1 && shapeValid)
+    {
+        #ifdef DEBUG_MODE
+        printf("Beam off  =>  ");
+        #endif // DEBUG_MODE
+
+        // Disable cursor
+        xyCursorColor(0, 0, 0);
+    }
+
+    // Update indices
+    ++stackPointIndex;
+
+    // Start new shape at end of current
     if(stackPointIndex >= renderStack[stackShapeIndex].pointCount)
     {
         stackPointIndex = 0;
         ++stackShapeIndex;
+
+        // Keep shape index inside of stack
+        if(stackShapeIndex >= stackTop)
+        {
+            stackShapeIndex = 0;
+        }
     }
 
-    // Keep stack index within stack
-    if(stackShapeIndex >= stackTop) stackShapeIndex = 0;
+    shapeValid = renderStack[stackShapeIndex].pointCount != 0 && renderStack[stackShapeIndex].points != NULL & renderStack[stackShapeIndex].visible;
 
-    // Ignore hidden and null shapes
-    if(!renderStack[stackShapeIndex].visible || renderStack[stackShapeIndex].points == NULL || renderStack[stackShapeIndex].pointCount == 0)
+    // Skip invalid shapes
+    if(!shapeValid)
     {
-        ++stackShapeIndex;
+        #ifdef DEBUG_MODE
+        printf("Shape invalid. Moving to origin (%i, %i).\n", renderStack[stackShapeIndex].positionX, renderStack[stackShapeIndex].positionY);
+        #endif // DEBUG_MODE
+
+        // Move cursor to origin of shape in order to be ready for the next shape. (If an invalid shape follows a large jump,
+        // the cursor still needs moved so the cursor is near the next valid shape.)
+        xyCursorMove(renderStack[stackShapeIndex].positionX, renderStack[stackShapeIndex].positionY);
+
         return;
     }
 
-    // Update cursor
-    xyCursorSet(renderStack[stackShapeIndex].points[stackPointIndex].x + renderStack[stackShapeIndex].positionX, renderStack[stackShapeIndex].points[stackPointIndex].y + renderStack[stackShapeIndex].positionY);
-    ++stackPointIndex;
+    #ifdef DEBUG_MODE
+    printf("Drawing point (%i, %i).\n", renderStack[stackShapeIndex].points[stackPointIndex].x + renderStack[stackShapeIndex].positionX, renderStack[stackShapeIndex].points[stackPointIndex].y + renderStack[stackShapeIndex].positionY);
+    #endif // DEBUG_MODE
+
+    // Move cursor to next point
+    xyCursorMove(renderStack[stackShapeIndex].points[stackPointIndex].x + renderStack[stackShapeIndex].positionX, renderStack[stackShapeIndex].points[stackPointIndex].y + renderStack[stackShapeIndex].positionY);
 }
 
 void rendererEntrypoint()
 {
     while(rendererActive)
     {
-        // TODO: Need a timer here, not just a function call.
-        // - Spec appropriate one, set at start, blocking call at end
+        // To do: Timers are weird, don't really want to do the blocking call here, but it seems fast interrupts like this are
+        // weird on the pico, especially given the fact that its on the 2nd core, as that means the core will just sit there
+        // and spin. This is not a final solution, but it works for now.
         rendererInterrupt();
-        // xyDelay(); // TODO: TIMERS
+        sleep_us(5);
     }
 }
 

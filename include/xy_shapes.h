@@ -6,10 +6,15 @@
 // Author: Cole Barach
 // 
 // Description: Collection of primate shapes to use in X-Y rendering.
+//
+// To do:
+// - ASCII table needs finished.
+// - Configurable font sizes would be nice, maybe just add some options.
+// - Characters need updated to clean double tracing and weird end-points.
 
 // Includes -------------------------------------------------------------------------------------------------------------------
 
-#include "xy.h"
+#include "xy_hardware.h"
 
 // Libraries ------------------------------------------------------------------------------------------------------------------
 

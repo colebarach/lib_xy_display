@@ -17,4 +17,8 @@ add_library(xy
     xy_math.c
 )
 
-target_link_libraries(xy pico_stdlib pico_multicore)
+target_link_libraries(xy
+    pico_stdlib
+    hardware_pwm
+    pico_multicore
+)

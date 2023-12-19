@@ -14,21 +14,19 @@
 //   This file is not intended to be used directly in user applications, but that does not mean that it cannot be.
 //
 // Naming: This file reserves the 'xy' prefix.
-//
-// To do:
-// - Blanking
 
 // Libraries ------------------------------------------------------------------------------------------------------------------
 
 // C Standard Libraries
 #include <stdint.h>
+#include <stdbool.h>
 
 // Datatypes ------------------------------------------------------------------------------------------------------------------
 
 // X-Y Coordinate
 // - The smallest datatype required to contain an X or Y position.
 // - Note: this does not indicate the range of values that may be displayed, use the width / height functions for that.
-typedef uint16_t xyCoord_t;
+typedef int16_t xyCoord_t;
 
 // X-Y Coordinate (Long)
 // - Extended datatype for holding an X or Y position with room to prevent overflow (used for arithmetic).
@@ -48,26 +46,60 @@ struct xyPoint
 // Typedef for brevity.
 typedef struct xyPoint xyPoint_t;
 
+// Color Channel
+// - Datatype to represent a color value (red, green, or blue).
+// - Only holds values from [0, 255].
+typedef uint8_t xyColor_t;
+
 // Functions ------------------------------------------------------------------------------------------------------------------
 
-// X-Y Initialize
-// - Call to initialize the X-Y cursor outputs and the library's internal state.
-// - The contiguous bit-field of specified length and offset is reserved as an output for the individual X and Y signals.
-// - Must be called before the library is used.
-// - Note that a higher level portion of the library may perform this step in its initialization (see respective documentation
-//   to determine if this is the case).
-void xyInitialize(uint16_t xBitOffset, uint16_t xBitLength, uint16_t yBitOffset, uint16_t yBitLength, xyCoord_t xWidth, xyCoord_t yHeight);
+// Setup X & Y Ports
+// - Call to setup the X and Y signal parallel ports.
+// - Each port will begin at the pin number specified by the offset and span the specified number of contiguous pins.
+// - For proper functionality, these ports may not overlap.
+// - This must be called before the X-Y library can be used, calling any other function in the library before this one is
+//   undefined behavior.
+void xySetupXy(uint16_t portXOffset_, uint16_t portXSize, uint16_t portYOffset_, uint16_t portYSize);
 
-// X-Y Cursor Set
-// - Call to set the position of the cursor.
-void xyCursorSet(xyCoord_t x, xyCoord_t y);
+// Setup Z Signal PWM
+// - Call to setup the Z signal PWM output using the specified pin.
+// - This function is subject to the limitation of the current hardware, please refer to your device's restrictions on PWM
+//   output. If an invalid request is made, the behavior of this function is undefined.
+// - The Z signal will output the apparent brightness (luma) of the intended color to render.
+// - This signal is a redundant version of the RGB outputs, it may be used if RGB is not an option.
+// - Use -1 to indicate the pin is to not be used.
+void xySetupZ(int16_t pinZ);
 
-// X-Y Width
-// - Call to get the width of the screen.
-xyCoord_t xyWidth();
+// Setup RGB Signals PWM
+// - Call to setup the red, green, and blue signal PWM outputs using the specified pins.
+// - This function is subject to the limitations of the current hardware, please refer to your device's restrictions on PWM
+//   output. If an invalid request is made, the behavior of this function is undefined.
+// - The red, green, and blue signals will output a 3 PWM signals, the duty cycle of each corresponding to the value of each
+//   channel.
+// - If -1 is specified for any pin number, said signal will not be output.
+void xySetupRgb(int16_t pinRed, int16_t pinGreen, int16_t pinBlue);
 
-// X-Y Height
-// - Call to get the height of the screen.
-xyCoord_t xyHeight();
+// Setup Screen
+// - Call to set the boundaries of the screen.
+// - Use the wrap variable to specify whether coordinates out of bounds should be clamped to or wrapped around the screen.
+void xySetupScreen(xyCoord_t width, xyCoord_t height, bool wrap);
+
+// Move Cursor
+// - Call to move the cursor to the specified position.
+// - Will clamp / wrap the coordinates depending on the specified screen settings.
+void xyCursorMove(xyCoord_t x, xyCoord_t y);
+
+// Color Cursor
+// - Call to set the color of the cursor to the specified value.
+// - Only expects value that fit within the xyColor_t datatype (0 to 255 inclusive).
+void xyCursorColor(xyColor_t red, xyColor_t green, xyColor_t blue);
+
+// Get Screen Width
+// - Call to get the width of the screen in pixels.
+xyCoord_t xyScreenWidth();
+
+// Get Screen Height
+// - Call to get the height of the screen in pixels.
+xyCoord_t xyScreenHeight();
 
 #endif // XY_HARDWARE_H

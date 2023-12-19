@@ -10,24 +10,17 @@
 //   Rendering is dependent on multiprogramming capability with precise timing, the platform and associated libraries must
 //   support this, or this system is not possible.
 // 
-// Naming: This file reserves the 'xyRenderer' and 'xyShape' prefixes, although the required 'xy_hardware.h' file reserves the
-//   'xy' prefix.
+// Naming: This file reserves the 'xyRender', 'xyRenderer' and, 'xyShape' prefixes, although the required 'xy_hardware.h' file
+//   reserves the 'xy' prefix.
 // 
 // To do:
 // - String objects would be nice, need an internal stack for that
 // - Render period is only approximate right now, specific timing may help with inconsistent appearances
-// - How should the null shape be handled? It may need changed for strings. (Consider screen burn-in)
 // - Reimplement string, overhaul methods
-// - Hiding a shape still consumes a cycle, this can cause burn-in. How to fix this without recursion?
 
 // Includes -------------------------------------------------------------------------------------------------------------------
 
 #include "xy_hardware.h"
-
-// Libraries ------------------------------------------------------------------------------------------------------------------
-
-// C Standard Libraries
-#include <stdbool.h>
 
 // Datatypes ------------------------------------------------------------------------------------------------------------------
 
@@ -36,48 +29,61 @@
 // - The position and visibility parameters may be used to control the way a shape is rendered.
 struct xyShape
 {
-    volatile xyPoint_t* points;          // Array of points to render
-    uint16_t            pointCount;      // Number of elements in the point array
-    xyCoord_t           positionX;       // X offset of the shape
-    xyCoord_t           positionY;       // Y offset of the shape
-    bool                visible;         // Indicates whether to render the shape or not
+    volatile xyPoint_t* points;          // Array of points to render.
+    uint16_t            pointCount;      // Number of elements in the point array.
+    xyCoord_t           positionX;       // X offset of the shape.
+    xyCoord_t           positionY;       // Y offset of the shape.
+    xyColor_t           colorRed;        // Red channel of the color to render
+    xyColor_t           colorGreen;      // Green channel of the color to render
+    xyColor_t           colorBlue;       // Blue channel of the color to render.
+    bool                visible;         // Indicates whether to render the shape or not.
+    uint8_t             delayUs;         // Amount of time to delay before drawing shape.
 };
 
 // Typedef for brevity.
 typedef struct xyShape xyShape_t;
 
+struct xyString
+{
+    volatile xyShape_t* characters;        // Array of characters in the string.
+    uint16_t            characterCount;    // Number of elements in the character array.
+};
+
+// Typedef for brevity.
+typedef struct xyString xyString_t;
+
 // Rendering ------------------------------------------------------------------------------------------------------------------
 
 // Render Shape
-// - Call to add the specified shape to the render stack
-// - Returns a reference to the successfully created shape, returns NULL otherwise
-volatile xyShape_t* xyRendererRenderShape(volatile xyPoint_t* points, uint16_t pointCount, xyCoord_t positionX, xyCoord_t positionY);
+// - Call to add the specified shape to the render stack.
+// - Returns a reference to the successfully created shape, returns NULL otherwise.
+volatile xyShape_t* xyRenderShape(volatile xyPoint_t* points, uint16_t pointCount, xyCoord_t positionX, xyCoord_t positionY, bool visible);
 
 // Render Char
-// - Call to render a character to the screen at the given position
-// - Returns a reference to the successfully created shape, returns NULL otherwise
-volatile xyShape_t* xyRendererRenderChar(char data, xyCoord_t xPosition, xyCoord_t yPosition);
+// - Call to render a character to the screen at the given position.
+// - Returns a reference to the successfully created shape, returns NULL otherwise.
+volatile xyShape_t* xyRenderChar(char data, xyCoord_t xPosition, xyCoord_t yPosition);
 
-// // Render String
-// // - TODO: Should this have bounds?
-// // - Call to render a string to the screen at the given position
-// // - Returns 0 on success, -1 otherwise
-// int16_t xyRendererRenderString(const char* data, uint16_t xPosition, uint16_t yPosition);
+// Render String
+// - Call to render a string to the screen at the given position.
+// - Returns a string handler object.
+xyString_t xyRenderString(char* data, xyCoord_t lowerBoundX, xyCoord_t lowerBoundY, xyCoord_t upperBoundX, xyCoord_t upperBoundY);
 
-// Clear Stack
-// - Call to empty the render stack
-void xyRendererClearStack();
+// Clear Renderer
+// - Call to empty the render stack.
+// - All existing shape handers become invalid, nothing will be rendered until one of the render functions is called again.
+void xyRendererClear();
 
 // Renderer -------------------------------------------------------------------------------------------------------------------
 
-// Initialize Renderer
-// - Call to initialize the renderer using the specified output port.
-// - See the 'xyCursorInitialize' function in 'xy_hardware.h' for details on the pin usage.
-// - Must be called before any other function is used.
-void xyRendererInitialize(uint16_t xBitOffset, uint16_t xBitLength, uint16_t yBitOffset, uint16_t yBitLength, xyCoord_t xWidth, xyCoord_t yHeight);
+// Start Renderer
+// - Call to start the renderer.
+// - Cannot be called until the the library output has been setup (see 'xy_hardware.h') for more details.
+// - Will begin rendering everything in the render stack.
+void xyRendererStart();
 
 // Stop Renderer
-// - Call to disable the renderer.
+// - Call to stop the renderer.
 void xyRendererStop();
 
 // Shapes ---------------------------------------------------------------------------------------------------------------------

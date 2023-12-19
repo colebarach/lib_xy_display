@@ -10,5 +10,8 @@ pico_sdk_init()
 
 include_directories(../../include)
 
+add_subdirectory(hello_world)
 add_subdirectory(ascii_table)
 add_subdirectory(translation)
+# add_subdirectory(animation)
+# add_subdirectory(procedural_models)
