@@ -7,7 +7,7 @@
 // Libraries ------------------------------------------------------------------------------------------------------------------
 
 // X-Y Library
-#include <xy.h>
+#include <xy_renderer.h>
 
 // Pico Standard Library
 #include <pico/stdlib.h>
@@ -17,23 +17,68 @@
 
 // I/O ------------------------------------------------------------------------------------------------------------------------
 
-#define X_PIN_OFFSET  0        // X port starts at GPIO 0
-#define X_PIN_LENGTH  8        // X port spans GPIO 0 to GPIO 7
-#define Y_PIN_OFFSET  8        // Y port starts at GPIO 8
-#define Y_PIN_LENGTH  8        // Y port spans GPIO 8 to GPIO 15
+#define X_PORT_OFFSET  0       // X port starts at GPIO 0
+#define X_PORT_SIZE    8       // X port spans GPIO 0 to GPIO 7
+#define Y_PORT_OFFSET  8       // Y port starts at GPIO 8
+#define Y_PORT_SIZE    8       // Y port spans GPIO 8 to GPIO 15
+#define Z_PIN          16      // Z output is GPIO 16
 
 #define SCREEN_WIDTH  0x100    // Coordinates range [0, 255]
 #define SCREEN_HEIGHT 0x100    // Coordinates range [0, 255]
 
-// Functions ------------------------------------------------------------------------------------------------------------------
+// Function Prototypes --------------------------------------------------------------------------------------------------------
 
 // Generate Hilbert Curve
-// - Call to populate the given model with a representation of the spacing-filling hilbert curve.
+// - Call to populate the given model with a representation of the spacing-filling Hilbert curve.
 // - Depth represents number of iterations to perform, (0 => single point, 1 => 'C' shaped curve)
 // - Scale represents the length of the smallest conneting line, measured in pixels.
-// - TODO: Doesn't render last point.
-// - TODO: Consider using return value for point count.
-void generateHilbertCurve(volatile xyPoint_t* model, uint16_t pointCount, uint16_t* pointIndex, int depth, int scale, int rotation, int direction)
+int generateHilbertCurve(volatile xyPoint_t* model, uint16_t modelSize, int depth, int scale);
+
+// Populate Hilbert Curve
+// - Call to populate the model with a representation of the Hilbert curve.
+// - Requires the first element in the model be defined.
+// - Point index must refer to a valid integer.
+// - Rotation must be in the domain [0, 3] inclusive, mapping to [0, 90, 180, 270] degrees respectively.
+// - Direction must be either 1 or -1.
+void populateHilbertCurve(volatile xyPoint_t* model, uint16_t pointCount, uint16_t* pointIndex, int depth, int scale, int rotation, int direction);
+
+// Entrypoint -----------------------------------------------------------------------------------------------------------------
+
+int main()
+{
+    // Initialize X-Y library
+    xySetupXy(X_PORT_OFFSET, X_PORT_SIZE, Y_PORT_OFFSET, Y_PORT_SIZE);
+    xySetupZ(Z_PIN);
+    xySetupScreen(SCREEN_WIDTH, SCREEN_HEIGHT, false);
+
+    xyRendererStart();
+
+    // Generate model
+    #define MODEL_SIZE 512
+    xyPoint_t model[MODEL_SIZE];
+    int modelSize = generateHilbertCurve(model, MODEL_SIZE, 4, 16);
+
+    // Render model
+    volatile xyShape_t* shape = xyRenderShape(model, modelSize, 0, 0, true);
+    shape->delayUs = 160;
+
+    while(true);
+}
+
+// Function Definitions -------------------------------------------------------------------------------------------------------
+
+int generateHilbertCurve(volatile xyPoint_t* model, uint16_t modelSize, int depth, int scale)
+{
+    model[0].x = 0;
+    model[0].y = 0;
+
+    uint16_t pointIndex = 0;
+    populateHilbertCurve(model, modelSize, &pointIndex, depth, scale, 0, 1);
+
+    return pointIndex + 1;
+}
+
+void populateHilbertCurve(volatile xyPoint_t* model, uint16_t pointCount, uint16_t* pointIndex, int depth, int scale, int rotation, int direction)
 {
     // Fractal math:
 
@@ -80,162 +125,32 @@ void generateHilbertCurve(volatile xyPoint_t* model, uint16_t pointCount, uint16
     if(depth == 0) return;
 
     // Render subcurve 0
-    generateHilbertCurve(model, pointCount, pointIndex, depth - 1, scale, (rotation + 2 - direction) % 4, -direction);
+    populateHilbertCurve(model, pointCount, pointIndex, depth - 1, scale, (rotation + 2 - direction) % 4, -direction);
 
     // Draw connecting line
     if(*pointIndex + 1 >= pointCount) return;
-    model[*pointIndex + 1].x = model[*pointIndex].x + scale * cos(M_PI_2 * rotation);
-    model[*pointIndex + 1].y = model[*pointIndex].y + scale * sin(M_PI_2 * rotation);
+    model[*pointIndex + 1].x = model[*pointIndex].x + scale * cosf(M_PI_2 * rotation);
+    model[*pointIndex + 1].y = model[*pointIndex].y + scale * sinf(M_PI_2 * rotation);
     ++(*pointIndex);
 
     // Render subcurve 1
-    generateHilbertCurve(model, pointCount, pointIndex, depth - 1, scale, rotation, direction);
+    populateHilbertCurve(model, pointCount, pointIndex, depth - 1, scale, rotation, direction);
 
     // Draw connecting line
     if(*pointIndex + 1 >= pointCount) return;
-    model[*pointIndex + 1].x = model[*pointIndex].x - scale * sin(M_PI_2 * rotation) * direction;
-    model[*pointIndex + 1].y = model[*pointIndex].y + scale * cos(M_PI_2 * rotation) * direction;
+    model[*pointIndex + 1].x = model[*pointIndex].x - scale * sinf(M_PI_2 * rotation) * direction;
+    model[*pointIndex + 1].y = model[*pointIndex].y + scale * cosf(M_PI_2 * rotation) * direction;
     ++(*pointIndex);
 
     // Render subcurve 2
-    generateHilbertCurve(model, pointCount, pointIndex, depth - 1, scale, rotation, direction);
+    populateHilbertCurve(model, pointCount, pointIndex, depth - 1, scale, rotation, direction);
 
     // Draw connecting line
     if(*pointIndex + 1 >= pointCount) return;
-    model[*pointIndex + 1].x = model[*pointIndex].x - scale * cos(M_PI_2 * rotation);
-    model[*pointIndex + 1].y = model[*pointIndex].y - scale * sin(M_PI_2 * rotation);
+    model[*pointIndex + 1].x = model[*pointIndex].x - scale * cosf(M_PI_2 * rotation);
+    model[*pointIndex + 1].y = model[*pointIndex].y - scale * sinf(M_PI_2 * rotation);
     ++(*pointIndex);
 
     // Render subcurve 3
-    generateHilbertCurve(model, pointCount, pointIndex, depth - 1, scale, (rotation + 2 + direction) % 4, -direction);
+    populateHilbertCurve(model, pointCount, pointIndex, depth - 1, scale, (rotation + 2 + direction) % 4, -direction);
 }
-
-// void generate
-
-// Entrypoint -----------------------------------------------------------------------------------------------------------------
-
-int main()
-{
-    // Start renderer
-    // xyRendererInitialize(X_PIN_OFFSET, X_PIN_LENGTH, Y_PIN_OFFSET, Y_PIN_LENGTH, SCREEN_WIDTH, SCREEN_HEIGHT);
-
-    #define MODEL_SIZE 512
-
-    xyPoint_t model[MODEL_SIZE];
-    model[0].x = 0;
-    model[0].y = 0;
-
-    uint16_t pointIndex = 0;
-
-    // generateHilbertCurve(model, MODEL_SIZE, &pointIndex, 4, 16, 0, 1);
-
-    // xyRendererRenderShape(model, pointIndex, 0, 0);
-
-    while(true);
-}
-
-
-
-
-/* OLD CODE
-
-void generateHilbertCurve(volatile xyPoint_t* model, uint16_t pointIndex, uint16_t modelSize, int depth, int scale, int rotation, int direction)
-{
-    if(depth == 0) return;
-
-    if(rotation == 0)
-    {
-        if(direction == 0)
-        {
-            xyDrawDemoHilbertCurve(depth - 1, scale, 1, 1);
-            XY_CURSOR += scale;
-            xyDrawDemoHilbertCurve(depth - 1, scale, 0, 0);
-            XY_CURSOR += scale << 8;
-            xyDrawDemoHilbertCurve(depth - 1, scale, 0, 0);
-            XY_CURSOR -= scale;
-            xyDrawDemoHilbertCurve(depth - 1, scale, 3, 1);
-        }
-        else
-        {
-            xyDrawDemoHilbertCurve(depth - 1, scale, 3, 0);
-            XY_CURSOR += scale;
-            xyDrawDemoHilbertCurve(depth - 1, scale, 0, 1);
-            XY_CURSOR -= scale << 8;
-            xyDrawDemoHilbertCurve(depth - 1, scale, 0, 1);
-            XY_CURSOR -= scale;
-            xyDrawDemoHilbertCurve(depth - 1, scale, 1, 0);
-        }
-    }
-    else if(rotation == 1)
-    {
-        if(direction == 0)
-        {
-            xyDrawDemoHilbertCurve(depth - 1, scale, 2, 1);
-            XY_CURSOR += scale << 8;
-            xyDrawDemoHilbertCurve(depth - 1, scale, 1, 0);
-            XY_CURSOR -= scale;
-            xyDrawDemoHilbertCurve(depth - 1, scale, 1, 0);
-            XY_CURSOR -= scale << 8;
-            xyDrawDemoHilbertCurve(depth - 1, scale, 0, 1);
-        }
-        else
-        {
-            xyDrawDemoHilbertCurve(depth - 1, scale, 0, 0);
-            XY_CURSOR += scale << 8;
-            xyDrawDemoHilbertCurve(depth - 1, scale, 1, 1);
-            XY_CURSOR += scale;
-            xyDrawDemoHilbertCurve(depth - 1, scale, 1, 1);
-            XY_CURSOR -= scale << 8;
-            xyDrawDemoHilbertCurve(depth - 1, scale, 2, 0);
-        }
-    }
-    else if(rotation == 2)
-    {
-        if(direction == 0)
-        {
-            xyDrawDemoHilbertCurve(depth - 1, scale, 3, 1);
-            XY_CURSOR -= scale;
-            xyDrawDemoHilbertCurve(depth - 1, scale, 2, 0);
-            XY_CURSOR -= scale << 8;
-            xyDrawDemoHilbertCurve(depth - 1, scale, 2, 0);
-            XY_CURSOR += scale;
-            xyDrawDemoHilbertCurve(depth - 1, scale, 1, 1);
-        }
-        else
-        {
-            xyDrawDemoHilbertCurve(depth - 1, scale, 1, 0);
-            XY_CURSOR -= scale;
-            xyDrawDemoHilbertCurve(depth - 1, scale, 2, 1);
-            XY_CURSOR += scale << 8;
-            xyDrawDemoHilbertCurve(depth - 1, scale, 2, 1);
-            XY_CURSOR += scale;
-            xyDrawDemoHilbertCurve(depth - 1, scale, 3, 0);
-        }
-    }
-    else
-    {
-        if(direction == 0)
-        {
-            xyDrawDemoHilbertCurve(depth - 1, scale, 0, 1);
-            XY_CURSOR -= scale << 8;
-            xyDrawDemoHilbertCurve(depth - 1, scale, 3, 0);
-            XY_CURSOR += scale;
-            xyDrawDemoHilbertCurve(depth - 1, scale, 3, 0);
-            XY_CURSOR += scale << 8;
-            xyDrawDemoHilbertCurve(depth - 1, scale, 2, 1);
-        }
-        else
-        {
-            xyDrawDemoHilbertCurve(depth - 1, scale, 2, 0);
-            XY_CURSOR -= scale << 8;
-            xyDrawDemoHilbertCurve(depth - 1, scale, 3, 1);
-            XY_CURSOR -= scale;
-            xyDrawDemoHilbertCurve(depth - 1, scale, 3, 1);
-            XY_CURSOR += scale << 8;
-            xyDrawDemoHilbertCurve(depth - 1, scale, 0, 0);
-        }
-    }
-}
-
-*/
-

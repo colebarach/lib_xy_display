@@ -31,6 +31,7 @@ int main()
 
     xyRendererStart();
 
+    // Write message
     xyRenderString("HELLO,WORLD!", xyScreenWidth() / 2 - 0x30, xyScreenHeight() / 2 - 0x14, xyScreenWidth() / 2 + 0x30, xyScreenHeight() / 2 + 0x14);
 
     // Spin

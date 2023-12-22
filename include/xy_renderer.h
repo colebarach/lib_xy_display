@@ -16,7 +16,8 @@
 // To do:
 // - String objects would be nice, need an internal stack for that
 // - Render period is only approximate right now, specific timing may help with inconsistent appearances
-// - Reimplement string, overhaul methods
+// - Thoroughly test strings.
+// - Strings are ignoring control characters right now, ex new line.
 
 // Includes -------------------------------------------------------------------------------------------------------------------
 
