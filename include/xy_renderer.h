@@ -14,10 +14,7 @@
 //   reserves the 'xy' prefix.
 // 
 // To do:
-// - String objects would be nice, need an internal stack for that
 // - Render period is only approximate right now, specific timing may help with inconsistent appearances
-// - Thoroughly test strings.
-// - Strings are ignoring control characters right now, ex new line.
 
 // Includes -------------------------------------------------------------------------------------------------------------------
 
@@ -38,7 +35,7 @@ struct xyShape
     xyColor_t           colorGreen;      // Green channel of the color to render
     xyColor_t           colorBlue;       // Blue channel of the color to render.
     bool                visible;         // Indicates whether to render the shape or not.
-    uint8_t             delayUs;         // Amount of time to delay before drawing shape.
+    uint16_t            delayUs;         // Amount of time to delay before drawing shape.
 };
 
 // Typedef for brevity.

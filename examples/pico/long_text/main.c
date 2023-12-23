@@ -1,15 +1,13 @@
-// ASCII Table Demo -----------------------------------------------------------------------------------------------------------
+// Long Text Demo -------------------------------------------------------------------------------------------------------------
 //
 // Author: Cole Barach
 //
-// Description: Draws a static 'ASCII' table on the screen, demonstrating the method of drawing characters and the available
-//   symbols.
+// Description:
 
 // Libraries ------------------------------------------------------------------------------------------------------------------
 
 // X-Y Library
 #include <xy_renderer.h>
-#include <xy_shapes.h>
 
 // I/O ------------------------------------------------------------------------------------------------------------------------
 
@@ -33,14 +31,7 @@ int main()
 
     xyRendererStart();
 
-    for(uint16_t row = 0; row < 8; ++row)
-    {
-        for(uint16_t column = 0; column < 16; ++column)
-        {
-            volatile xyShape_t* shape = xyRenderChar(row * 0x10 + column, column * 0x10, 0x8C - row * 0x14);
-            if(column == 0) shape->delayUs = 320;
-        }
-    }
+    // xyRenderString();
 
     // Spin
     while(1);

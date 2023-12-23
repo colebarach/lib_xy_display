@@ -94,7 +94,7 @@ xyString_t xyRenderString(char* data, xyCoord_t lowerBoundX, xyCoord_t lowerBoun
     bool start = true;
     while(*data != '\0')
     {
-        if(positionX + 0x0C >= upperBoundX)
+        if(positionX + 0x0C >= upperBoundX || *data == '\n')
         {
             if(positionY - 0x14 < lowerBoundY) break;
 
