@@ -15,6 +15,7 @@
 // 
 // To do:
 // - Render period is only approximate right now, specific timing may help with inconsistent appearances
+// - Implement a standardized delay, used by strings and the lot.
 
 // Includes -------------------------------------------------------------------------------------------------------------------
 
@@ -83,6 +84,11 @@ void xyRendererStart();
 // Stop Renderer
 // - Call to stop the renderer.
 void xyRendererStop();
+
+// Strings --------------------------------------------------------------------------------------------------------------------
+
+// Update String
+void xyStringUpdate(xyString_t* string, char* data);
 
 // Shapes ---------------------------------------------------------------------------------------------------------------------
 

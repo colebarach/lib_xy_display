@@ -91,7 +91,7 @@ xyString_t xyRenderString(char* data, xyCoord_t lowerBoundX, xyCoord_t lowerBoun
     xyCoord_t positionX = lowerBoundX;
     xyCoord_t positionY = upperBoundY - 0x10;
 
-    bool start = true;
+    int index = 0;
     while(*data != '\0')
     {
         if(positionX + 0x0C >= upperBoundX || *data == '\n')
@@ -100,13 +100,18 @@ xyString_t xyRenderString(char* data, xyCoord_t lowerBoundX, xyCoord_t lowerBoun
 
             positionX = lowerBoundX;
             positionY -= 0x14;
+
+            if(*data == '\n')
+            {
+                ++data;
+                continue;
+            }
         }
 
-        if(start)
+        if(index == 0)
         {
             string.characters = xyRenderChar(*data, positionX, positionY);
             if(string.characters == NULL) break;
-            start = false;
         }
         else
         {
@@ -116,58 +121,15 @@ xyString_t xyRenderString(char* data, xyCoord_t lowerBoundX, xyCoord_t lowerBoun
             }
         }
 
+        if(positionX == lowerBoundX) string.characters[index].delayUs = 320;
+
         positionX += 0x10;
         ++data;
+        ++index;
     }
 
     return string;
 }
-
-// int16_t xyRendererRenderString(const char* data, uint16_t xPosition, uint16_t yPosition)
-// {
-//     uint16_t index = 0;
-
-//     uint16_t cursorXPosition = xPosition;
-//     uint16_t cursorYPosition = yPosition;
-
-//     while(data[index] != '\0')
-//     {
-//         // Check for control characters and screen bounds
-//         // - TODO: Hard coded values
-//         // - TODO: This code is weird, could be organized better
-//         if(data[index] == '\n' || cursorXPosition + 0x0C > 0xFF)
-//         {
-//             // Check y bounds
-//             if(cursorYPosition < 0x14)
-//             {
-//                 return -1;
-//             }
-
-//             // Move to new line
-//             cursorXPosition = xPosition;
-//             cursorYPosition -= 0x14;
-
-//             if(data[index] == '\n')
-//             {
-//                 ++index;
-//                 continue;
-//             }
-//         }
-
-//         // Render character and check for error
-//         if(xyRendererRenderChar(data[index], cursorXPosition, cursorYPosition) == NULL)
-//         {
-//             return -1;
-//         }
-
-//         // Increment cursor and index
-//         // - TODO: Hard coded values
-//         cursorXPosition += 0x10;
-//         ++index;
-//     }
-
-//     return 0;
-// }
 
 void xyRendererClear()
 {

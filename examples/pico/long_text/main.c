@@ -31,7 +31,9 @@ int main()
 
     xyRendererStart();
 
-    // xyRenderString();
+    xyRenderString("The X-Y library can render strings like this!\n\"I'm in the top paragraph\"\n----------------", 0x00, 0x80, 0x100, 0x100);
+    xyRenderString("Here's the bottom-left block!", 0x00, 0x00, 0x6C, 0x6C);
+    xyRenderString("And the bottom-right block!", 0x80, 0x00, 0x100, 0x6C);
 
     // Spin
     while(1);
