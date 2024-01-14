@@ -2,7 +2,7 @@
 //
 // Author: Cole Barach
 //
-// Description: Example program to demonstrate the runtime generation of models.
+// Description: Example program to demonstrate the runtime generation of models. Generates and renders a Hilbert Curve fractal.
 
 // Libraries ------------------------------------------------------------------------------------------------------------------
 
@@ -15,7 +15,7 @@
 // C Standard Library
 #include <math.h>
 
-// I/O ------------------------------------------------------------------------------------------------------------------------
+// I/O & Timing ---------------------------------------------------------------------------------------------------------------
 
 #define X_PORT_OFFSET  0       // X port starts at GPIO 0
 #define X_PORT_SIZE    8       // X port spans GPIO 0 to GPIO 7
@@ -23,8 +23,13 @@
 #define Y_PORT_SIZE    8       // Y port spans GPIO 8 to GPIO 15
 #define Z_PIN          16      // Z output is GPIO 16
 
-#define SCREEN_WIDTH  0x100    // Coordinates range [0, 255]
-#define SCREEN_HEIGHT 0x100    // Coordinates range [0, 255]
+#define RC_CONSTANT_US 4       // RC constant of the output filter
+#define RC_PIXEL_THRES 1       // Threshold of the cursor's accuracy
+
+#define Z_DELAY_US     20      // Time to wait for z-output update
+
+#define SCREEN_WIDTH   0x100   // Coordinates range [0, 255]
+#define SCREEN_HEIGHT  0x100   // Coordinates range [0, 255]
 
 // Function Prototypes --------------------------------------------------------------------------------------------------------
 
@@ -49,8 +54,11 @@ int main()
     // Initialize X-Y library
     xySetupXy(X_PORT_OFFSET, X_PORT_SIZE, Y_PORT_OFFSET, Y_PORT_SIZE);
     xySetupZ(Z_PIN);
+    xySetupRcTiming(RC_CONSTANT_US, RC_PIXEL_THRES);
+    xySetupRgbzDelay(Z_DELAY_US);
     xySetupScreen(SCREEN_WIDTH, SCREEN_HEIGHT, false);
 
+    // Start rendering
     xyRendererStart();
 
     // Generate model
@@ -60,7 +68,6 @@ int main()
 
     // Render model
     volatile xyShape_t* shape = xyRenderShape(model, modelSize, 0, 0, true);
-    shape->delayUs = 160;
 
     while(true);
 }
