@@ -36,7 +36,6 @@ struct xyShape
     xyColor_t           colorGreen;      // Green channel of the color to render
     xyColor_t           colorBlue;       // Blue channel of the color to render.
     bool                visible;         // Indicates whether to render the shape or not.
-    uint16_t            delayUs;         // Amount of time to delay before drawing shape.
 };
 
 // Typedef for brevity.
