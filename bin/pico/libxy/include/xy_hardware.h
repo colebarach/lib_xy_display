@@ -79,6 +79,18 @@ void xySetupZ(int16_t pinZ);
 // - If -1 is specified for any pin number, said signal will not be output.
 void xySetupRgb(int16_t pinRed, int16_t pinGreen, int16_t pinBlue);
 
+// Setup RC-Filter Timing
+// - Call to set the time parameters of the output RC filter.
+// - Will determine how long to wait between cursor update to ensure the intended position is reached.
+// - Use the RC constant to specify the time constant of the output filter in us.
+// - Use pixel threshold to specify how close the cursor must get to the intended position.
+void xySetupRcTiming(uint16_t rcConstantUs_, uint16_t rcPixelThreshold_);
+
+// Setup RGB/Z Signal Delay
+// - Call to store the minimum required delay to change the value of the RGB / Z outputs.
+// - The xyCursorColor function will block for this amount of time after updating the output.
+void xySetupRgbzDelay(uint16_t delayUs);
+
 // Setup Screen
 // - Call to set the boundaries of the screen.
 // - Use the wrap variable to specify whether coordinates out of bounds should be clamped to or wrapped around the screen.
@@ -92,7 +104,16 @@ void xyCursorMove(xyCoord_t x, xyCoord_t y);
 // Color Cursor
 // - Call to set the color of the cursor to the specified value.
 // - Only expects value that fit within the xyColor_t datatype (0 to 255 inclusive).
+// - Will block for the amount of time specified in the xySetupRbgzDelay function.
 void xyCursorColor(xyColor_t red, xyColor_t green, xyColor_t blue);
+
+// Get Cursor Move Delay
+// - Call to get the number of microseconds to wait after performing a move to the specified position.
+uint16_t xyGetCursorDelayUs(xyCoord_t x, xyCoord_t y);
+
+// Get Cursor Move Delay
+// - Call to get the number of microseconds to wait after performing a move from point 1 to point 2.
+uint16_t xyGetMoveDelayUs(xyCoord_t x1, xyCoord_t y1, xyCoord_t x2, xyCoord_t y2);
 
 // Get Screen Width
 // - Call to get the width of the screen in pixels.
@@ -101,5 +122,13 @@ xyCoord_t xyScreenWidth();
 // Get Screen Height
 // - Call to get the height of the screen in pixels.
 xyCoord_t xyScreenHeight();
+
+// Get Cursor Position X
+// - Call to get the current position of the cursor
+xyCoord_t xyCursorX();
+
+// Get Cursor Position Y
+// - Call to get the current position of the cursor
+xyCoord_t xyCursorY();
 
 #endif // XY_HARDWARE_H
