@@ -12,8 +12,12 @@ include_directories(../../include)
 
 add_subdirectory(hello_world)
 add_subdirectory(ascii_table)
+add_subdirectory(rc_test)
 add_subdirectory(strings)
 add_subdirectory(translation)
-# add_subdirectory(animation)
+add_subdirectory(animation)
 add_subdirectory(crt_diagram)
 add_subdirectory(procedural_models)
+
+# pico_enable_stdio_usb(ascii_table 1)
+# pico_enable_stdio_uart(ascii_table 0)
